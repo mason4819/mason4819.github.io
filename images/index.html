@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Images</title>
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: radial-gradient(circle at top, #222, #000);
+  color: #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  background: #111;
+  border-radius: 12px;
+  padding: 30px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 0 30px rgba(0,0,0,.7);
+}
+
+h1 {
+  margin-top: 0;
+  text-align: center;
+  color: #79c934;
+}
+
+textarea, input[type=file] {
+  width: 100%;
+  background: #000;
+  color: #eee;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 10px;
+  margin: 10px 0;
+}
+
+textarea {
+  height: 180px;
+  resize: vertical;
+}
+
+button {
+  background: linear-gradient(135deg, #4d8c2a, #79c934);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 18px;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 10px;
+  width: 100%;
+}
+
+button:hover {
+  filter: brightness(1.1);
+}
+
+.result {
+  margin-top: 15px;
+  word-break: break-all;
+  font-size: 13px;
+}
+
+.result a {
+  color: #79c934;
+  text-decoration: none;
+}
+
+.preview {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.preview img {
+  max-width: 100%;
+  background: #000;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.copybox {
+  margin-top: 15px;
+  display: flex;
+  gap: 8px;
+}
+
+.copybox input {
+  flex: 1;
+  background: #000;
+  color: #eee;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.copybox button {
+  width: auto;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+</style>
+</head>
+<body>
+
+<div id="generator" class="card">
+  <h1>SVG URL Generator</h1>
+
+  <textarea id="svgInput" placeholder="Paste SVG source here..."></textarea>
+  <input type="file" id="svgFile" accept=".svg">
+
+  <button onclick="generate()">Generate URL</button>
+
+  <div class="result" id="result"></div>
+
+  <div class="copybox" id="copyBox" style="display:none;">
+    <input id="imgCode" readonly>
+    <button onclick="copyImg()">Copy &lt;img&gt;</button>
+  </div>
+
+  <div class="preview" id="previewBox">
+    <img id="preview" alt="">
+  </div>
+</div>
+
+<script>
+function cleanSVG(svg) {
+  if (svg.charCodeAt(0) === 0xFEFF) svg = svg.slice(1);
+  return svg.replace(/\r?\n|\r/g, '').trim();
+}
+
+function generate() {
+  const file = svgFile.files[0];
+  const text = svgInput.value.trim();
+
+  if (!file && !text) {
+    alert("Please paste SVG code or choose a file!");
+    return;
+  }
+
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = e => show(e.target.result);
+    reader.readAsText(file, "UTF-8");
+  } else {
+    show(text);
+  }
+}
+
+function show(svg) {
+  svg = cleanSVG(svg);
+  const encoded = encodeURIComponent(svg);
+  const url = `${location.origin}${location.pathname}?=${encoded}`;
+
+  result.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+
+  const dataUri = `data:image/svg+xml;utf8,${encoded}`;
+  preview.src = dataUri;
+
+  const imgTag = `<img src="${url}" alt="svg">`;
+  imgCode.value = imgTag;
+  copyBox.style.display = "flex";
+}
+
+function copyImg() {
+  imgCode.select();
+  document.execCommand("copy");
+  alert("Copied <img> code!");
+}
+
+// If URL has ?= parameter, show only the image
+window.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(location.search);
+  const svg = params.get("");
+  if (svg) {
+    document.body.innerHTML = "";
+    const img = document.createElement("img");
+    img.src = `data:image/svg+xml;utf8,${svg}`;
+    img.style.maxWidth = "100%";
+    img.style.display = "block";
+    img.style.margin = "0 auto";
+    document.body.style.background = "#000";
+    document.body.appendChild(img);
+  }
+});
+</script>
+
+</body>
+</html>

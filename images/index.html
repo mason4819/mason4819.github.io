@@ -5,189 +5,124 @@
 <title>Images</title>
 <style>
 * { box-sizing: border-box; }
-
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: radial-gradient(circle at top, #222, #000);
-  color: #eee;
+  background: #0f0f0f;
+  color: #eaeaea;
+  font-family: Arial, sans-serif;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 }
-
-.card {
-  background: #111;
-  border-radius: 12px;
+.container {
+  background: #1a1a1a;
   padding: 30px;
+  border-radius: 12px;
   width: 90%;
-  max-width: 600px;
-  box-shadow: 0 0 30px rgba(0,0,0,.7);
-}
-
-h1 {
-  margin-top: 0;
+  max-width: 500px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.6);
   text-align: center;
-  color: #79c934;
 }
-
-textarea, input[type=file] {
+h1 { margin-bottom: 20px; }
+input, textarea, button {
   width: 100%;
-  background: #000;
-  color: #eee;
-  border: 1px solid #333;
+  margin: 8px 0;
+  padding: 12px;
   border-radius: 6px;
-  padding: 10px;
-  margin: 10px 0;
-}
-
-textarea {
-  height: 180px;
-  resize: vertical;
-}
-
-button {
-  background: linear-gradient(135deg, #4d8c2a, #79c934);
-  color: #000;
   border: none;
-  border-radius: 6px;
-  padding: 12px 18px;
   font-size: 15px;
+}
+textarea {
+  height: 150px;
+  resize: none;
+}
+input, textarea {
+  background: #2a2a2a;
+  color: #fff;
+}
+button {
+  background: #3a86ff;
+  color: #fff;
   cursor: pointer;
-  margin-top: 10px;
-  width: 100%;
 }
-
 button:hover {
-  filter: brightness(1.1);
+  background: #5a9bff;
 }
-
 .result {
   margin-top: 15px;
   word-break: break-all;
   font-size: 13px;
 }
-
-.result a {
-  color: #79c934;
-  text-decoration: none;
-}
-
 .preview {
   margin-top: 20px;
-  text-align: center;
-}
-
-.preview img {
   max-width: 100%;
-  background: #000;
-  border: 1px solid #333;
+  background: #fff;
   border-radius: 6px;
-  padding: 10px;
-}
-
-.copybox {
-  margin-top: 15px;
-  display: flex;
-  gap: 8px;
-}
-
-.copybox input {
-  flex: 1;
-  background: #000;
-  color: #eee;
-  border: 1px solid #333;
-  border-radius: 6px;
-  padding: 8px;
-}
-
-.copybox button {
-  width: auto;
-  padding: 8px 14px;
-  font-size: 13px;
 }
 </style>
 </head>
 <body>
 
-<div id="generator" class="card">
+<div class="container" id="app">
   <h1>SVG URL Generator</h1>
 
-  <textarea id="svgInput" placeholder="Paste SVG source here..."></textarea>
+  <textarea id="svgText" placeholder="Paste SVG code here..."></textarea>
   <input type="file" id="svgFile" accept=".svg">
-
   <button onclick="generate()">Generate URL</button>
 
   <div class="result" id="result"></div>
-
-  <div class="copybox" id="copyBox" style="display:none;">
-    <input id="imgCode" readonly>
-    <button onclick="copyImg()">Copy &lt;img&gt;</button>
-  </div>
-
-  <div class="preview" id="previewBox">
-    <img id="preview" alt="">
-  </div>
+  <img id="preview" class="preview">
 </div>
 
 <script>
-function cleanSVG(svg) {
-  if (svg.charCodeAt(0) === 0xFEFF) svg = svg.slice(1);
-  return svg.replace(/\r?\n|\r/g, '').trim();
+function toBase64UTF8(str) {
+  return btoa(unescape(encodeURIComponent(str)));
 }
 
 function generate() {
-  const file = svgFile.files[0];
-  const text = svgInput.value.trim();
+  const text = document.getElementById('svgText').value.trim();
+  const file = document.getElementById('svgFile').files[0];
 
-  if (!file && !text) {
-    alert("Please paste SVG code or choose a file!");
+  if (!text && !file) {
+    alert("Please paste SVG or upload a file.");
     return;
   }
 
   if (file) {
     const reader = new FileReader();
-    reader.onload = e => show(e.target.result);
+    reader.onload = e => build(e.target.result);
     reader.readAsText(file, "UTF-8");
   } else {
-    show(text);
+    build(text);
   }
 }
 
-function show(svg) {
-  svg = cleanSVG(svg);
-  const encoded = encodeURIComponent(svg);
+function build(svg) {
+  const base64 = toBase64UTF8(svg);
+  const encoded = encodeURIComponent(base64);
   const url = `${location.origin}${location.pathname}?=${encoded}`;
 
-  result.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+  document.getElementById('result').innerHTML =
+    `<a href="${url}" target="_blank" style="color:#3a86ff">${url}</a>`;
 
-  const dataUri = `data:image/svg+xml;utf8,${encoded}`;
-  preview.src = dataUri;
-
-  const imgTag = `<img src="${url}" alt="svg">`;
-  imgCode.value = imgTag;
-  copyBox.style.display = "flex";
+  document.getElementById('preview').src =
+    `data:image/svg+xml;base64,${base64}`;
 }
 
-function copyImg() {
-  imgCode.select();
-  document.execCommand("copy");
-  alert("Copied <img> code!");
-}
-
-// If URL has ?= parameter, show only the image
+// Auto render when opening with ?=
 window.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(location.search);
-  const svg = params.get("");
-  if (svg) {
+  const data = params.get("");
+
+  if (data) {
+    const base64 = decodeURIComponent(data); // ⭐ 關鍵！
     document.body.innerHTML = "";
     const img = document.createElement("img");
-    img.src = `data:image/svg+xml;utf8,${svg}`;
+    img.src = `data:image/svg+xml;base64,${base64}`;
     img.style.maxWidth = "100%";
     img.style.display = "block";
-    img.style.margin = "0 auto";
-    document.body.style.background = "#000";
+    img.style.margin = "20px auto";
     document.body.appendChild(img);
   }
 });

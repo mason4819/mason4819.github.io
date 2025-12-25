@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Katvok</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- SEO Meta -->
+  <meta name="description" content="Katvok is a transparent desktop overlay app that displays floating images with smooth motion. Lightweight, beautiful, and perfect for desktop customization.">
+  <meta name="keywords" content="Katvok, desktop overlay, floating images, desktop customization, electron app, transparent overlay, animated desktop">
+  <meta name="author" content="mason">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:title" content="Katvok - Desktop Overlay App">
+  <meta property="og:description" content="Add some fun to your idle computer with Katvok, a transparent floating image overlay for your desktop.">
+  <meta property="og:image" content="https://mason4819.github.io/images/Banner.png">
+  <meta property="og:url" content="https://mason4819.github.io/katvok/">
+  <meta property="og:type" content="website">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Katvok - Desktop Overlay App">
+  <meta name="twitter:description" content="A lightweight transparent overlay app that animates floating images on your desktop.">
+  <meta name="twitter:image" content="https://mason4819.github.io/images/Banner.png">
+
+  <!-- Favicon -->
+  <link rel="icon" href="/images/logo.png" type="image/x-icon">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Katvok",
+    "operatingSystem": "Windows, macOS, Linux",
+    "applicationCategory": "DesktopApplication",
+    "description": "Katvok is a transparent desktop overlay application that renders floating images with smooth motion.",
+    "url": "https://mason4819.github.io/katvok/",
+    "author": {
+      "@type": "Person",
+      "name": "mason4819"
+    }
+  }
+  </script>
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: radial-gradient(circle at top, #1a1a1a, #000000);
+      color: #eaeaea;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+    a { color: #79c934; text-decoration: none; }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      opacity: 0;
+    }
+
+    .intro {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    .intro img {
+      width: 260px;
+      max-width: 70%;
+      opacity: 0;
+    }
+    .card {
+      background: rgba(15, 15, 15, 0.9);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04),
+        0 12px 30px rgba(0,0,0,0.9);
+      backdrop-filter: blur(6px);
+    }
+    .center { text-align: center; }
+    h2 {
+      margin-bottom: 16px;
+      font-weight: 700;
+      color: #fff;
+      font-size: 1.8rem;
+      border-left: 5px solid;
+      border-image: linear-gradient(180deg, #4d8c2a, #79c934) 1;
+      padding-left: 12px;
+      display: flex;
+      align-items: center;
+      gap: .5em;
+    }
+    .tortoise {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      background: url("/images/tortoise.png") no-repeat center / contain;
+      vertical-align: -0.15em;
+      flex-shrink: 0;
+    }
+    p { color: #ccc; margin-bottom: 12px; }
+    ul { list-style: none; margin-top: 10px; }
+    ul li {
+      margin-bottom: 10px;
+      padding-left: 26px;
+      position: relative;
+      color: #ddd;
+    }
+    ul li::before {
+      content: ">";
+      position: absolute;
+      left: 0;
+      background: linear-gradient(135deg, #4d8c2a, #79c934);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    img {
+      max-width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+      margin: 20px 0;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 12px 34px;
+      background: linear-gradient(135deg, #4d8c2a, #79c934);
+      color: #081400;
+      border-radius: 999px;
+      font-weight: 600;
+      transition: .25s;
+      box-shadow: 0 6px 20px rgba(121, 201, 52, 0.5);
+    }
+    .btn:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 10px 30px rgba(121, 201, 52, 0.8);
+    }
+    footer {
+      text-align: center;
+      opacity: .6;
+      margin-top: 40px;
+      font-size: .9rem;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 開場動畫層 -->
+<div class="intro">
+  <img src="/images/text-logo.png" alt="Katvok Logo">
+</div>
+
+<div class="container">
+
+  <div class="card center">
+    <img src="/images/Banner.png" alt="Katvok Banner" width="400">
+    <p>Add some fun to your idle computer.</p>
+  </div>
+
+  <div class="card">
+    <h2>What is Katvok? <span class="tortoise"></span></h2>
+    <p>Katvok is a transparent desktop overlay application that renders floating images across your screen with smooth, space-like motion.</p>
+    <p>Running silently above all windows, Katvok creates an ambient visual layer without blocking mouse or keyboard interaction.</p>
+    <p>Designed for stability and low resource usage, Katvok is ideal for desktop customization, presentations, and creative visual setups.</p>
+  </div>
+
+  <div class="card">
+    <h2>Features ✨</h2>
+    <ul>
+      <li>Transparent, always-on-top desktop overlay</li>
+      <li>Smooth floating motion with random rotation and size</li>
+      <li>Images bounce naturally within the visible desktop area</li>
+      <li>Does not interfere with mouse or keyboard input</li>
+      <li>Lightweight and performance-friendly</li>
+      <li>Built with Electron for cross-platform support</li>
+    </ul>
+  </div>
+
+  <div class="card center">
+    <h2>Screenshot 💻</h2>
+    <img src="/images/Screenshot.png" alt="Katvok Screenshot" width="400">
+  </div>
+
+  <div class="card">
+    <h2>Controls ⌨</h2>
+    <ul>
+      <li><strong>Ctrl + S</strong> — Exit</li>
+      <li><strong>Ctrl + A</strong> — Control Menu</li>
+    </ul>
+  </div>
+
+  <div class="card center">
+    <h2>Download 🔽</h2>
+    <a class="btn" href="https://github.com/mason4819/Katvok/releases" target="_blank">
+      Go to Releases <span class="tortoise"></span>
+    </a>
+  </div>
+
+  <div class="card center">
+    <h2>Contact me 📱</h2>
+    <p><a href="mailto:coder4819@gmail.com">coder4819@gmail.com</a></p>
+  </div>
+
+  <footer>© 2025 Katvok. All rights reserved.</footer>
+
+</div>
+
+<script>
+  window.addEventListener("load", () => {
+    const tl = gsap.timeline();
+
+    tl.to(".intro img", { opacity: 1, duration: 1, ease: "power2.out" }) // logo 淡入
+      .to(".intro img", { opacity: 0, duration: 1, ease: "power2.in", delay: 1 }) // logo 停留後淡出
+      .to(".intro", { opacity: 0, duration: .5 })
+      .set(".intro", { display: "none" })
+      .to(".container", { opacity: 1, duration: .8, ease: "power2.out" }); // 顯示頁面
+  });
+</script>
+
+</body>
+</html>

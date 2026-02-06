@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chat Home</title>
+<link rel="stylesheet" href="/chat/style.css">
+<style>
+body { font-family:'Roboto',sans-serif; background:#fef7ff; display:flex; justify-content:center; align-items:center; height:100vh; }
+.container { background:#fff; border-radius:16px; padding:24px; width:360px; box-shadow:0 4px 16px rgba(0,0,0,0.1); text-align:center; }
+input { width:80%; padding:10px; margin:8px 0; border-radius:8px; border:1px solid #ccc; }
+button { background:#6750a4; color:#fff; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-size:16px; }
+button:hover{opacity:0.9;}
+img{width:80px;height:80px;border-radius:50%;margin-bottom:16px;}
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Welcome to Chat</h2>
+  <img id="avatarPreview" src="https://via.placeholder.com/80" alt="avatar">
+  <input type="text" id="username" placeholder="Enter your username">
+  <input type="text" id="avatar" placeholder="Enter avatar URL" oninput="updateAvatar()">
+  <br>
+  <button onclick="startChat()">Start Chat</button>
+</div>
+
+<script>
+let confirmCount=0;
+
+function updateAvatar(){
+  const url=document.getElementById("avatar").value;
+  if(url) document.getElementById("avatarPreview").src=url;
+}
+
+function startChat(){
+  if(!document.getElementById("username").value){
+    alert("Please enter a username");
+    return;
+  }
+
+  const proceed=confirm("Warning: This chat does not take responsibility for scams. Do not trust strangers.");
+  if(!proceed) return;
+
+  confirmCount++;
+  if(confirmCount<2){
+    alert("Please confirm the warning again to enter");
+    return;
+  }
+
+  localStorage.setItem("chatUser",document.getElementById("username").value);
+  localStorage.setItem("chatAvatar",document.getElementById("avatar").value || "");
+  window.location.href="/chat/";
+}
+</script>
+</body>
+</html>

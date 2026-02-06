@@ -16,23 +16,50 @@ ws.onclose = (evt) => console.log("WebSocket closed:", evt.code, evt.reason);
 ws.onmessage = (evt) => {
   const data = JSON.parse(evt.data);
   const isSelf = data.user === username;
+
   const msgEl = document.createElement("div");
   msgEl.className = "message" + (isSelf ? " self" : "");
-  msgEl.innerHTML = `<img class="avatar" src="${data.avatar}"><div class="content"><strong>${escapeHtml(data.user)}:</strong> ${escapeHtml(data.text)}</div>`;
+  msgEl.innerHTML = `
+    <img class="avatar" src="${data.avatar}">
+    <div class="content"><strong>${escapeHtml(data.user)}:</strong> ${escapeHtml(data.text)}</div>
+  `;
+
   chatWindow.appendChild(msgEl);
   chatWindow.scrollTop = chatWindow.scrollHeight;
 };
 
+// 發送訊息
 function sendMessage() {
   const text = msgInput.value.trim();
   if (!text) return;
-  ws.send(JSON.stringify({ user: username, text: text, avatar: avatar }));
+
+  ws.send(JSON.stringify({
+    user: username,
+    text: text,
+    avatar: avatar
+  }));
+
   msgInput.value = "";
+  msgInput.focus();
 }
 
-msgInput.addEventListener("keydown", (e) => { if (e.key === "Enter") sendMessage(); });
+// Enter 發送
+msgInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { // Enter 單行發送
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// 按鈕發送
 sendBtn.addEventListener("click", sendMessage);
 
+// 防 XSS
 function escapeHtml(str) {
-  return str.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+  return str
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }

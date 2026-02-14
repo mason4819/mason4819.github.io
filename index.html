@@ -105,7 +105,7 @@
                     <div id="preview-type" class="text-slate-700 font-bold text-right"></div>
                     <div class="text-slate-400 font-medium">Size</div>
                     <div id="preview-size" class="text-slate-700 font-bold text-right"></div>
-                    <div class="text-slate-400 font-medium">Update Date</div>
+                    <div class="text-slate-400 font-medium">Status</div>
                     <div id="preview-date" class="text-slate-700 font-bold text-right"></div>
                 </div>
                 <div>
@@ -122,9 +122,8 @@
         let currentSelectedNode = null;
         let isGitHubMode = false;
 
-        // 擴展圖標對照表 (Enhanced Icon Mapping)
+        // Icon mapping table
         const iconMap = {
-            // Web 開發
             'js': 'fa-brands fa-square-js text-yellow-400',
             'jsx': 'fa-brands fa-react text-blue-400',
             'ts': 'fa-solid fa-file-code text-blue-500',
@@ -134,8 +133,6 @@
             'scss': 'fa-brands fa-sass text-pink-400',
             'less': 'fa-brands fa-less text-blue-600',
             'vue': 'fa-brands fa-vuejs text-emerald-500',
-            
-            // 程式語言
             'py': 'fa-brands fa-python text-blue-600',
             'java': 'fa-brands fa-java text-red-600',
             'cpp': 'fa-solid fa-c text-blue-700',
@@ -148,8 +145,6 @@
             'swift': 'fa-brands fa-swift text-orange-500',
             'kt': 'fa-solid fa-bolt text-purple-500',
             'dart': 'fa-solid fa-bullseye text-blue-400',
-            
-            // 安裝檔與執行檔 (Executables & Installers)
             'exe': 'fa-solid fa-window-maximize text-blue-600',
             'msi': 'fa-solid fa-box-open text-slate-400',
             'apk': 'fa-brands fa-android text-emerald-500',
@@ -160,8 +155,6 @@
             'bat': 'fa-solid fa-terminal text-emerald-600',
             'cmd': 'fa-solid fa-terminal text-emerald-600',
             'bin': 'fa-solid fa-microchip text-slate-500',
-            
-            // 資料庫與數據
             'sql': 'fa-solid fa-database text-blue-400',
             'sqlite': 'fa-solid fa-database text-blue-300',
             'csv': 'fa-solid fa-file-csv text-emerald-600',
@@ -170,15 +163,11 @@
             'yaml': 'fa-solid fa-file-lines text-purple-400',
             'yml': 'fa-solid fa-file-lines text-purple-400',
             'xml': 'fa-solid fa-file-code text-orange-400',
-            
-            // 配置文件
             'toml': 'fa-solid fa-file-contract text-slate-500',
             'env': 'fa-solid fa-gear text-yellow-500',
             'gitignore': 'fa-brands fa-git-alt text-orange-600',
             'dockerfile': 'fa-brands fa-docker text-blue-400',
             'config': 'fa-solid fa-gear text-slate-400',
-            
-            // 文檔與媒體
             'md': 'fa-brands fa-markdown text-slate-500',
             'txt': 'fa-solid fa-file-lines text-slate-400',
             'pdf': 'fa-solid fa-file-pdf text-red-500',
@@ -190,8 +179,6 @@
             'ico': 'fa-solid fa-image text-yellow-500',
             'mp4': 'fa-solid fa-file-video text-blue-400',
             'mp3': 'fa-solid fa-file-audio text-pink-400',
-            
-            // 壓縮檔
             'zip': 'fa-solid fa-file-zipper text-yellow-700',
             'rar': 'fa-solid fa-file-zipper text-yellow-700',
             '7z': 'fa-solid fa-file-zipper text-yellow-700',
@@ -276,7 +263,7 @@
                             name: part,
                             kind: item.type === 'blob' ? 'file' : 'directory',
                             size: item.size ? formatBytes(item.size) : '-',
-                            date: 'Live',
+                            date: 'Synced', 
                             url: item.url,
                             children: item.type === 'tree' ? {} : null
                         };
@@ -355,14 +342,14 @@
             document.getElementById('preview-icon').className = `${iconMap[ext] || 'fa-solid fa-file'} text-5xl mb-4`;
             document.getElementById('preview-type').textContent = ext.toUpperCase();
             const textContent = document.getElementById('file-text-content');
-            textContent.textContent = 'Loading content...';
+            textContent.textContent = 'Loading...';
             try {
                 if (isGitHubMode && node.url) {
                     const res = await fetch(node.url);
                     const data = await res.json();
                     textContent.textContent = atob(data.content.replace(/\s/g, ''));
                 }
-            } catch (e) { textContent.textContent = '// Unable to read content (Binary or empty file)'; }
+            } catch (e) { textContent.textContent = '// Content unavailable (Binary or empty file)'; }
         }
 
         function formatBytes(bytes) {

@@ -152,15 +152,22 @@
             const urlParams = new URLSearchParams(window.location.search);
             let rawRepo = urlParams.get('repo');
 
-            // Auto-detect GitHub Pages URL
+            // Improved Auto-detect for GitHub Pages URL (e.g., user.github.io/repo/)
             if (!rawRepo && window.location.hostname.includes('github.io')) {
                 const username = window.location.hostname.split('.')[0];
-                const repoName = window.location.pathname.split('/').filter(p => p)[0];
-                if (repoName) rawRepo = `${username}/${repoName}`;
+                // Get the first non-empty segment of the path as the repo name
+                const pathSegments = window.location.pathname.split('/').filter(p => p);
+                const repoName = pathSegments[0];
+                if (repoName) {
+                    rawRepo = `${username}/${repoName}`;
+                    // If there are more segments, append them as the path
+                    if (pathSegments.length > 1) {
+                        rawRepo += '/' + pathSegments.slice(1).join('/');
+                    }
+                }
             }
 
             if (rawRepo) {
-                // Parse format: username/repo/path/to/dir
                 const parts = rawRepo.split('/').filter(p => p);
                 if (parts.length >= 2) {
                     const repo = `${parts[0]}/${parts[1]}`;
@@ -175,8 +182,14 @@
         async function loadGitHubRepo(repo, targetPath) {
             loadingOverlay.classList.remove('hidden');
             try {
-                const res = await fetch(`https://api.github.com/repos/${repo}/git/trees/main?recursive=1`);
-                if (!res.ok) throw new Error('Repository or branch not found');
+                // Fetch from main branch by default; could fallback to master if needed
+                let res = await fetch(`https://api.github.com/repos/${repo}/git/trees/main?recursive=1`);
+                if (!res.ok) {
+                    // Try master branch as fallback
+                    res = await fetch(`https://api.github.com/repos/${repo}/git/trees/master?recursive=1`);
+                }
+                
+                if (!res.ok) throw new Error('Repository not found or branch is neither main nor master');
                 const data = await res.json();
                 
                 buildGitHubFileSystem(repo, data.tree, targetPath);

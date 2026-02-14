@@ -48,6 +48,14 @@
         @keyframes rotate {
             100% { transform: rotate(360deg); }
         }
+
+        .media-preview {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: #f0f2f5;
+        }
     </style>
 </head>
 <body class="bg-white">
@@ -108,8 +116,12 @@
                     <div class="text-slate-400 font-medium">Status</div>
                     <div id="preview-date" class="text-slate-700 font-bold text-right"></div>
                 </div>
-                <div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Code Preview</p>
+                
+                <div id="inspector-content-area">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2" id="preview-label">Preview</p>
+                    <!-- Media Display -->
+                    <div id="media-container" class="hidden mb-4 flex justify-center"></div>
+                    <!-- Text Display -->
                     <pre id="file-text-content" class="bg-gray-50 text-slate-700 p-4 rounded-md text-[11px] leading-relaxed overflow-x-auto whitespace-pre-wrap min-h-[300px] border border-gray-200 font-mono"></pre>
                 </div>
             </div>
@@ -122,7 +134,6 @@
         let currentSelectedNode = null;
         let isGitHubMode = false;
 
-        // Icon mapping table
         const iconMap = {
             'js': 'fa-brands fa-square-js text-yellow-400',
             'jsx': 'fa-brands fa-react text-blue-400',
@@ -192,6 +203,9 @@
         const breadcrumbContainer = document.getElementById('breadcrumb-container');
         const previewPanel = document.getElementById('preview-panel');
         const loadingOverlay = document.getElementById('loading-overlay');
+        const mediaContainer = document.getElementById('media-container');
+        const fileTextContent = document.getElementById('file-text-content');
+        const previewLabel = document.getElementById('preview-label');
 
         window.onload = async () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -341,15 +355,50 @@
             
             document.getElementById('preview-icon').className = `${iconMap[ext] || 'fa-solid fa-file'} text-5xl mb-4`;
             document.getElementById('preview-type').textContent = ext.toUpperCase();
-            const textContent = document.getElementById('file-text-content');
-            textContent.textContent = 'Loading...';
+
+            // Reset UI
+            mediaContainer.innerHTML = '';
+            mediaContainer.classList.add('hidden');
+            fileTextContent.classList.remove('hidden');
+            fileTextContent.textContent = 'Loading content...';
+            previewLabel.textContent = 'Code Preview';
+
             try {
                 if (isGitHubMode && node.url) {
                     const res = await fetch(node.url);
                     const data = await res.json();
-                    textContent.textContent = atob(data.content.replace(/\s/g, ''));
+                    
+                    const isImage = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'ico'].includes(ext);
+                    const isVideo = ['mp4', 'webm'].includes(ext);
+
+                    if (isImage) {
+                        previewLabel.textContent = 'Image Preview';
+                        fileTextContent.classList.add('hidden');
+                        mediaContainer.classList.remove('hidden');
+                        const img = document.createElement('img');
+                        img.className = 'media-preview';
+                        // GitHub returns base64. For SVG we need to handle potential XML
+                        const mime = ext === 'svg' ? 'image/svg+xml' : `image/${ext}`;
+                        img.src = `data:${mime};base64,${data.content.replace(/\s/g, '')}`;
+                        mediaContainer.appendChild(img);
+                    } else if (isVideo) {
+                        previewLabel.textContent = 'Video Preview';
+                        fileTextContent.classList.add('hidden');
+                        mediaContainer.classList.remove('hidden');
+                        const video = document.createElement('video');
+                        video.className = 'media-preview';
+                        video.controls = true;
+                        video.src = `data:video/${ext};base64,${data.content.replace(/\s/g, '')}`;
+                        mediaContainer.appendChild(video);
+                    } else {
+                        // Default to Text
+                        fileTextContent.textContent = atob(data.content.replace(/\s/g, ''));
+                    }
                 }
-            } catch (e) { textContent.textContent = '// Content unavailable (Binary or empty file)'; }
+            } catch (e) { 
+                fileTextContent.classList.remove('hidden');
+                fileTextContent.textContent = '// Content unavailable or binary file format not supported for preview.'; 
+            }
         }
 
         function formatBytes(bytes) {

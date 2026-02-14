@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
-            background-color: #ffffff;
+            background-color: #0d1117;
+            color: #c9d1d9;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
             height: 100vh;
             margin: 0;
@@ -19,26 +20,29 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        .file-row:hover { background-color: #f6f8fa; }
-        .file-row.selected { background-color: #0969da12; }
+        .file-row { border-bottom: 1px solid #21262d; transition: background-color 0.2s; }
+        .file-row:hover { background-color: #161b22; }
+        .file-row.selected { background-color: #1f6feb22; }
         
         thead th {
             position: sticky;
             top: 0;
-            background: #ffffff;
+            background: #0d1117;
             z-index: 10;
-            box-shadow: inset 0 -1px 0 #d0d7de;
+            box-shadow: inset 0 -1px 0 #30363d;
             font-weight: 600;
-            color: #57606a;
+            color: #8b949e;
             font-size: 12px;
+            text-transform: uppercase;
         }
         
-        .breadcrumb-item:hover { color: #0969da; text-decoration: underline; }
+        .breadcrumb-item:hover { color: #58a6ff; text-decoration: underline; }
         
         /* Responsive Preview Panel */
         #preview-panel {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-left: 1px solid #d0d7de;
+            background-color: #0d1117;
+            border-left: 1px solid #30363d;
             position: fixed;
             right: 0;
             top: 0;
@@ -65,8 +69,8 @@
 
         .spinner {
             animation: rotate 2s linear infinite;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
         }
         @keyframes rotate {
             100% { transform: rotate(360deg); }
@@ -76,17 +80,22 @@
             max-width: 100%;
             max-height: 400px;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            background: #f0f2f5;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            background: #161b22;
+        }
+
+        pre {
+            scrollbar-width: thin;
+            scrollbar-color: #30363d transparent;
         }
     </style>
 </head>
-<body class="bg-white">
+<body class="bg-[#0d1117]">
 
     <!-- Top Navigation -->
-    <nav class="px-4 md:px-6 py-3 border-b border-gray-200 flex items-center justify-between text-sm select-none bg-slate-50">
-        <div id="breadcrumb-container" class="flex items-center gap-2 text-slate-600 font-semibold overflow-x-auto no-scrollbar whitespace-nowrap">
-            <i class="fa-brands fa-github text-lg flex-shrink-0"></i>
+    <nav class="px-4 md:px-6 py-3 border-b border-[#30363d] flex items-center justify-between text-sm select-none bg-[#161b22]">
+        <div id="breadcrumb-container" class="flex items-center gap-2 text-[#8b949e] font-semibold overflow-x-auto no-scrollbar whitespace-nowrap">
+            <i class="fa-brands fa-github text-xl flex-shrink-0 text-white"></i>
             <span id="repo-status">Detecting repository...</span>
         </div>
     </nav>
@@ -94,24 +103,27 @@
     <!-- Main Content Area -->
     <div class="flex flex-1 overflow-hidden relative">
         <main class="flex-1 overflow-y-auto no-scrollbar relative" id="main-content">
-            <div id="loading-overlay" class="hidden absolute inset-0 bg-white bg-opacity-80 z-20 flex flex-col items-center justify-center">
-                <i class="fa-solid fa-circle-notch spinner text-blue-500 text-3xl mb-4"></i>
-                <p class="text-slate-500 text-sm" id="loading-text">Fetching file tree...</p>
+            <!-- Loading Overlay -->
+            <div id="loading-overlay" class="hidden absolute inset-0 bg-[#0d1117] bg-opacity-90 z-20 flex flex-col items-center justify-center">
+                <i class="fa-solid fa-circle-notch spinner text-[#58a6ff] text-3xl mb-4"></i>
+                <p class="text-[#8b949e] text-sm" id="loading-text">Fetching file tree...</p>
             </div>
 
-            <div id="empty-view" class="flex flex-col items-center justify-center h-full text-slate-400 p-6 text-center">
+            <!-- Empty State -->
+            <div id="empty-view" class="flex flex-col items-center justify-center h-full text-[#484f58] p-6 text-center">
                 <i class="fa-solid fa-code-merge text-6xl mb-4 opacity-20"></i>
-                <p class="text-lg">No Online Repository Detected</p>
-                <p class="text-xs mt-2 max-w-xs">Please use URL parameter <code>?repo=user/repo</code> to explore.</p>
+                <p class="text-xl text-[#8b949e]">No Repository Detected</p>
+                <p class="text-xs mt-2 max-w-xs text-[#484f58]">Use <code>?repo=user/repo</code> in the URL to start exploring.</p>
             </div>
 
+            <!-- Table View -->
             <table id="file-table" class="w-full text-left text-sm border-collapse hidden">
                 <thead>
                     <tr class="select-none">
-                        <th class="px-4 md:px-6 py-3 border-r border-gray-100 w-full md:w-[45%]">Name</th>
-                        <th class="hidden md:table-cell px-6 py-3 border-r border-gray-100 w-32">Type</th>
-                        <th class="hidden lg:table-cell px-6 py-3 border-r border-gray-100 w-48">Status</th>
-                        <th class="hidden sm:table-cell px-6 py-3 text-right w-24">Size</th>
+                        <th class="px-4 md:px-6 py-4 border-r border-[#21262d] w-full md:w-[45%]">Name</th>
+                        <th class="hidden md:table-cell px-6 py-4 border-r border-[#21262d] w-32">Type</th>
+                        <th class="hidden lg:table-cell px-6 py-4 border-r border-[#21262d] w-48">Status</th>
+                        <th class="hidden sm:table-cell px-6 py-4 text-right w-24">Size</th>
                     </tr>
                 </thead>
                 <tbody id="file-list"></tbody>
@@ -119,31 +131,32 @@
         </main>
 
         <!-- Preview Panel -->
-        <aside id="preview-panel" class="overflow-hidden bg-white flex flex-col shadow-2xl">
-            <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h3 class="font-bold text-slate-800 text-xs uppercase tracking-tight">File Inspector</h3>
-                <button onclick="closePreview()" class="text-slate-400 hover:text-red-500 transition-colors p-2">
-                    <i class="fa-solid fa-circle-xmark text-xl"></i>
+        <aside id="preview-panel" class="overflow-hidden flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-[#30363d] flex justify-between items-center bg-[#161b22]">
+                <h3 class="font-bold text-[#c9d1d9] text-xs uppercase tracking-widest">File Inspector</h3>
+                <button onclick="closePreview()" class="text-[#8b949e] hover:text-white transition-colors p-2">
+                    <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
             <div class="flex-1 p-4 md:p-6 overflow-y-auto">
-                <div class="flex flex-col items-center py-6 border-b border-gray-100 mb-6">
-                    <i id="preview-icon" class="fa-solid fa-file text-5xl mb-4"></i>
-                    <p id="preview-filename" class="text-base font-bold text-slate-900 break-all text-center px-4"></p>
+                <div class="flex flex-col items-center py-8 border-b border-[#21262d] mb-6">
+                    <i id="preview-icon" class="fa-solid fa-file text-6xl mb-4"></i>
+                    <p id="preview-filename" class="text-base font-bold text-white break-all text-center px-4"></p>
                 </div>
-                <div class="grid grid-cols-2 gap-y-3 gap-x-2 text-[11px] mb-8">
-                    <div class="text-slate-400 font-medium">Format</div>
-                    <div id="preview-type" class="text-slate-700 font-bold text-right"></div>
-                    <div class="text-slate-400 font-medium">Size</div>
-                    <div id="preview-size" class="text-slate-700 font-bold text-right"></div>
-                    <div class="text-slate-400 font-medium">Status</div>
-                    <div id="preview-date" class="text-slate-700 font-bold text-right"></div>
+                
+                <div class="grid grid-cols-2 gap-y-4 gap-x-2 text-[11px] mb-8 uppercase tracking-wider">
+                    <div class="text-[#8b949e]">Format</div>
+                    <div id="preview-type" class="text-[#c9d1d9] font-bold text-right"></div>
+                    <div class="text-[#8b949e]">Size</div>
+                    <div id="preview-size" class="text-[#c9d1d9] font-bold text-right"></div>
+                    <div class="text-[#8b949e]">Status</div>
+                    <div id="preview-date" class="text-[#c9d1d9] font-bold text-right"></div>
                 </div>
                 
                 <div id="inspector-content-area">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2" id="preview-label">Preview</p>
+                    <p class="text-[10px] font-black text-[#484f58] uppercase tracking-[0.2em] mb-3" id="preview-label">Preview</p>
                     <div id="media-container" class="hidden mb-4 flex justify-center"></div>
-                    <pre id="file-text-content" class="bg-gray-50 text-slate-700 p-4 rounded-md text-[11px] leading-relaxed overflow-x-auto whitespace-pre-wrap min-h-[200px] border border-gray-200 font-mono"></pre>
+                    <pre id="file-text-content" class="bg-[#161b22] text-[#c9d1d9] p-4 rounded-lg text-[11px] leading-relaxed overflow-x-auto whitespace-pre-wrap min-h-[250px] border border-[#30363d] font-mono"></pre>
                 </div>
             </div>
         </aside>
@@ -155,10 +168,10 @@
         let currentSelectedNode = null;
         let isGitHubMode = false;
 
-        // Expanded Icon Map for Development Files
+        // Unified Icon Map with GitHub Dark Theme Colors
         const iconMap = {
-            // Web
-            'js': 'fa-brands fa-square-js text-yellow-400',
+            // Web Technologies
+            'js': 'fa-brands fa-square-js text-yellow-500',
             'jsx': 'fa-brands fa-react text-blue-400',
             'ts': 'fa-solid fa-file-code text-blue-500',
             'tsx': 'fa-brands fa-react text-cyan-400',
@@ -168,36 +181,36 @@
             'php': 'fa-brands fa-php text-indigo-400',
             
             // Programming Languages
-            'py': 'fa-brands fa-python text-blue-600',
-            'java': 'fa-brands fa-java text-red-600',
-            'c': 'fa-solid fa-file-code text-slate-600',
-            'cpp': 'fa-solid fa-file-code text-blue-700',
-            'h': 'fa-solid fa-h text-slate-400',
-            'hpp': 'fa-solid fa-h text-blue-400',
-            'cs': 'fa-solid fa-hashtag text-purple-600',
-            'go': 'fa-solid fa-code text-cyan-500',
-            'rs': 'fa-solid fa-gear text-orange-700',
+            'py': 'fa-brands fa-python text-blue-300',
+            'java': 'fa-brands fa-java text-red-400',
+            'c': 'fa-solid fa-file-code text-slate-400',
+            'cpp': 'fa-solid fa-file-code text-blue-600',
+            'h': 'fa-solid fa-h text-slate-500',
+            'hpp': 'fa-solid fa-h text-blue-500',
+            'cs': 'fa-solid fa-hashtag text-purple-500',
+            'go': 'fa-solid fa-code text-cyan-400',
+            'rs': 'fa-solid fa-gear text-orange-600',
             'rb': 'fa-solid fa-gem text-red-500',
             'swift': 'fa-brands fa-swift text-orange-500',
-            'kt': 'fa-solid fa-code text-purple-400',
+            'kt': 'fa-solid fa-code text-purple-500',
             
             // Config & Data
             'json': 'fa-solid fa-file-signature text-yellow-600',
             'yaml': 'fa-solid fa-file-lines text-red-400',
             'yml': 'fa-solid fa-file-lines text-red-400',
-            'toml': 'fa-solid fa-gear text-slate-500',
-            'xml': 'fa-solid fa-file-code text-orange-300',
-            'md': 'fa-brands fa-markdown text-slate-500',
-            'txt': 'fa-solid fa-file-lines text-slate-400',
-            'pdf': 'fa-solid fa-file-pdf text-red-500',
+            'toml': 'fa-solid fa-gear text-slate-400',
+            'xml': 'fa-solid fa-file-code text-orange-400',
+            'md': 'fa-brands fa-markdown text-blue-300',
+            'txt': 'fa-solid fa-file-lines text-slate-500',
+            'pdf': 'fa-solid fa-file-pdf text-red-600',
             
-            // Binary & Logic
-            'bin': 'fa-solid fa-microchip text-slate-700',
-            'hex': 'fa-solid fa-microchip text-slate-500',
-            'elf': 'fa-solid fa-terminal text-green-600',
-            'ino': 'fa-solid fa-infinity text-teal-500',
+            // Low Level / Embedded
+            'bin': 'fa-solid fa-microchip text-slate-300',
+            'hex': 'fa-solid fa-microchip text-yellow-300',
+            'elf': 'fa-solid fa-terminal text-green-400',
+            'ino': 'fa-solid fa-infinity text-teal-400',
             
-            // Media
+            // Multimedia
             'png': 'fa-solid fa-image text-purple-400',
             'jpg': 'fa-solid fa-image text-purple-400',
             'jpeg': 'fa-solid fa-image text-purple-400',
@@ -206,12 +219,12 @@
             'mp4': 'fa-solid fa-file-video text-blue-400',
             'mp3': 'fa-solid fa-file-audio text-green-400',
             
-            // Archives
-            'zip': 'fa-solid fa-file-zipper text-yellow-700',
-            'tar': 'fa-solid fa-file-zipper text-yellow-800',
-            'gz': 'fa-solid fa-file-zipper text-yellow-900',
+            // Packaging
+            'zip': 'fa-solid fa-file-zipper text-yellow-600',
+            'tar': 'fa-solid fa-file-zipper text-yellow-700',
+            'gz': 'fa-solid fa-file-zipper text-yellow-800',
             
-            // Git
+            // Git specific
             'gitignore': 'fa-brands fa-git-alt text-orange-600'
         };
 
@@ -254,7 +267,7 @@
                     res = await fetch(`https://api.github.com/repos/${repo}/git/trees/master?recursive=1`);
                 }
                 
-                if (!res.ok) throw new Error('Repository or branch not found');
+                if (!res.ok) throw new Error('Repository Not Found');
                 
                 const data = await res.json();
                 buildGitHubFileSystem(repo, data.tree, targetPath);
@@ -265,7 +278,7 @@
                 
                 document.title = repo;
             } catch (err) {
-                document.getElementById('repo-status').textContent = `Load failed: ${err.message}`;
+                document.getElementById('repo-status').textContent = `Error: ${err.message}`;
             } finally {
                 loadingOverlay.classList.add('hidden');
             }
@@ -303,7 +316,7 @@
         }
 
         function renderBreadcrumb() {
-            breadcrumbContainer.innerHTML = `<i class="fa-brands fa-github text-lg mr-1 flex-shrink-0"></i>`;
+            breadcrumbContainer.innerHTML = `<i class="fa-brands fa-github text-xl mr-2 flex-shrink-0 text-white"></i>`;
             pathStack.forEach((node, index) => {
                 const item = document.createElement('span');
                 item.className = "breadcrumb-item cursor-pointer flex-shrink-0";
@@ -313,7 +326,7 @@
                 if (index < pathStack.length - 1) {
                     const sep = document.createElement('span');
                     sep.textContent = '/';
-                    sep.className = "mx-1 text-gray-300 flex-shrink-0";
+                    sep.className = "mx-1 text-[#30363d] flex-shrink-0";
                     breadcrumbContainer.appendChild(sep);
                 }
             });
@@ -323,37 +336,41 @@
             fileList.innerHTML = '';
             const currentNode = pathStack[pathStack.length - 1];
             const children = Object.values(currentNode.children || {});
+            // Sort: Directories first, then Files, then alphabetically
             children.sort((a, b) => a.kind !== b.kind ? (a.kind === 'directory' ? -1 : 1) : a.name.localeCompare(b.name));
 
             if (pathStack.length > 1) {
                 const backTr = document.createElement('tr');
-                backTr.className = "file-row cursor-pointer border-b border-gray-100 group";
-                backTr.innerHTML = `<td class="px-4 md:px-6 py-3 flex items-center gap-3" colspan="4"><i class="fa-solid fa-level-up-alt rotate-90 text-slate-400"></i><span class="text-slate-500 font-medium">..</span></td>`;
+                backTr.className = "file-row cursor-pointer group";
+                backTr.innerHTML = `<td class="px-4 md:px-6 py-4 flex items-center gap-3 text-[#58a6ff]" colspan="4"><i class="fa-solid fa-arrow-turn-up rotate-[-90deg] opacity-50"></i><span class="font-medium">..</span></td>`;
                 backTr.onclick = () => { pathStack.pop(); closePreview(); renderAll(); };
                 fileList.appendChild(backTr);
             }
 
             children.forEach((node) => {
                 const tr = document.createElement('tr');
-                tr.className = `file-row cursor-pointer border-b border-gray-100 ${currentSelectedNode === node ? 'selected' : ''}`;
+                tr.className = `file-row cursor-pointer ${currentSelectedNode === node ? 'selected' : ''}`;
                 
                 let ext = node.name.split('.').pop().toLowerCase();
-                const icon = node.kind === 'directory' ? 'fa-solid fa-folder text-blue-400' : (iconMap[ext] || 'fa-solid fa-file-lines text-slate-300');
+                const icon = node.kind === 'directory' ? 'fa-solid fa-folder text-[#58a6ff]' : (iconMap[ext] || 'fa-solid fa-file-lines text-[#8b949e]');
                 
                 tr.innerHTML = `
-                    <td class="px-4 md:px-6 py-3 flex items-center gap-3">
-                        <i class="${icon} text-base w-5 text-center flex-shrink-0"></i>
-                        <span class="truncate text-slate-700 font-medium block max-w-[150px] sm:max-w-none">${node.name}</span>
+                    <td class="px-4 md:px-6 py-4 flex items-center gap-3">
+                        <i class="${icon} text-lg w-6 text-center flex-shrink-0"></i>
+                        <span class="truncate text-[#c9d1d9] font-medium block max-w-[150px] sm:max-w-none">${node.name}</span>
                     </td>
-                    <td class="hidden md:table-cell px-6 py-3 text-slate-400 text-xs">${node.kind === 'directory' ? 'Folder' : ext.toUpperCase()}</td>
-                    <td class="hidden lg:table-cell px-6 py-3 text-slate-400 text-xs">${node.date}</td>
-                    <td class="hidden sm:table-cell px-6 py-3 text-slate-400 text-xs text-right font-mono">${node.size}</td>
+                    <td class="hidden md:table-cell px-6 py-4 text-[#8b949e] text-xs font-semibold">${node.kind === 'directory' ? 'Folder' : ext.toUpperCase()}</td>
+                    <td class="hidden lg:table-cell px-6 py-4 text-[#8b949e] text-xs font-semibold">${node.date}</td>
+                    <td class="hidden sm:table-cell px-6 py-4 text-[#8b949e] text-xs text-right font-mono">${node.size}</td>
                 `;
                 
                 tr.onclick = (e) => {
                     e.stopPropagation();
                     currentSelectedNode = node;
-                    if (node.kind === 'file') openPreview(node); else {
+                    if (node.kind === 'file') {
+                        openPreview(node);
+                        renderFileList(); // Re-render to show selection highlight
+                    } else {
                         pathStack.push(node);
                         closePreview();
                         renderAll();
@@ -370,13 +387,13 @@
             document.getElementById('preview-date').textContent = node.date;
             
             let ext = node.name.split('.').pop().toLowerCase();
-            document.getElementById('preview-icon').className = `${iconMap[ext] || 'fa-solid fa-file'} text-5xl mb-4`;
+            document.getElementById('preview-icon').className = `${iconMap[ext] || 'fa-solid fa-file'} text-6xl mb-4`;
             document.getElementById('preview-type').textContent = ext.toUpperCase();
 
             mediaContainer.innerHTML = '';
             mediaContainer.classList.add('hidden');
             fileTextContent.classList.remove('hidden');
-            fileTextContent.textContent = 'Loading...';
+            fileTextContent.textContent = 'Analyzing content...';
 
             try {
                 if (isGitHubMode && node.url) {
@@ -407,7 +424,7 @@
                         fileTextContent.textContent = atob(data.content.replace(/\s/g, ''));
                     }
                 }
-            } catch (e) { fileTextContent.textContent = '// Preview not available.'; }
+            } catch (e) { fileTextContent.textContent = '// Content cannot be displayed.'; }
         }
 
         function formatBytes(bytes) {
@@ -416,7 +433,7 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
         }
 
-        function closePreview() { previewPanel.classList.remove('open'); currentSelectedNode = null; }
+        function closePreview() { previewPanel.classList.remove('open'); currentSelectedNode = null; renderFileList(); }
         function renderAll() { renderBreadcrumb(); renderFileList(); }
         
         document.addEventListener('mousedown', (e) => {

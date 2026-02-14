@@ -155,7 +155,9 @@
         let currentSelectedNode = null;
         let isGitHubMode = false;
 
+        // Expanded Icon Map for Development Files
         const iconMap = {
+            // Web
             'js': 'fa-brands fa-square-js text-yellow-400',
             'jsx': 'fa-brands fa-react text-blue-400',
             'ts': 'fa-solid fa-file-code text-blue-500',
@@ -163,16 +165,54 @@
             'html': 'fa-brands fa-html5 text-orange-500',
             'css': 'fa-brands fa-css3-alt text-blue-400',
             'scss': 'fa-brands fa-sass text-pink-400',
+            'php': 'fa-brands fa-php text-indigo-400',
+            
+            // Programming Languages
             'py': 'fa-brands fa-python text-blue-600',
             'java': 'fa-brands fa-java text-red-600',
-            'php': 'fa-brands fa-php text-indigo-400',
+            'c': 'fa-solid fa-file-code text-slate-600',
+            'cpp': 'fa-solid fa-file-code text-blue-700',
+            'h': 'fa-solid fa-h text-slate-400',
+            'hpp': 'fa-solid fa-h text-blue-400',
+            'cs': 'fa-solid fa-hashtag text-purple-600',
+            'go': 'fa-solid fa-code text-cyan-500',
+            'rs': 'fa-solid fa-gear text-orange-700',
+            'rb': 'fa-solid fa-gem text-red-500',
+            'swift': 'fa-brands fa-swift text-orange-500',
+            'kt': 'fa-solid fa-code text-purple-400',
+            
+            // Config & Data
             'json': 'fa-solid fa-file-signature text-yellow-600',
+            'yaml': 'fa-solid fa-file-lines text-red-400',
+            'yml': 'fa-solid fa-file-lines text-red-400',
+            'toml': 'fa-solid fa-gear text-slate-500',
+            'xml': 'fa-solid fa-file-code text-orange-300',
             'md': 'fa-brands fa-markdown text-slate-500',
+            'txt': 'fa-solid fa-file-lines text-slate-400',
+            'pdf': 'fa-solid fa-file-pdf text-red-500',
+            
+            // Binary & Logic
+            'bin': 'fa-solid fa-microchip text-slate-700',
+            'hex': 'fa-solid fa-microchip text-slate-500',
+            'elf': 'fa-solid fa-terminal text-green-600',
+            'ino': 'fa-solid fa-infinity text-teal-500',
+            
+            // Media
             'png': 'fa-solid fa-image text-purple-400',
             'jpg': 'fa-solid fa-image text-purple-400',
             'jpeg': 'fa-solid fa-image text-purple-400',
+            'gif': 'fa-solid fa-image text-yellow-400',
             'svg': 'fa-solid fa-file-code text-pink-400',
-            'mp4': 'fa-solid fa-file-video text-blue-400'
+            'mp4': 'fa-solid fa-file-video text-blue-400',
+            'mp3': 'fa-solid fa-file-audio text-green-400',
+            
+            // Archives
+            'zip': 'fa-solid fa-file-zipper text-yellow-700',
+            'tar': 'fa-solid fa-file-zipper text-yellow-800',
+            'gz': 'fa-solid fa-file-zipper text-yellow-900',
+            
+            // Git
+            'gitignore': 'fa-brands fa-git-alt text-orange-600'
         };
 
         const emptyView = document.getElementById('empty-view');
@@ -190,7 +230,6 @@
             let rawRepo = urlParams.get('repo');
 
             if (rawRepo) {
-                // Remove protocol if user pastes full URL by mistake
                 rawRepo = rawRepo.replace(/^https?:\/\/github\.com\//, '');
                 
                 const parts = rawRepo.split('/').filter(p => p);
@@ -199,7 +238,6 @@
                     const path = parts.slice(2).join('/');
                     isGitHubMode = true;
                     
-                    // Update website title and UI header
                     document.title = repo; 
                     document.getElementById('repo-status').textContent = `Repository: ${repo}`;
                     
@@ -211,10 +249,8 @@
         async function loadGitHubRepo(repo, targetPath) {
             loadingOverlay.classList.remove('hidden');
             try {
-                // Try main branch first
                 let res = await fetch(`https://api.github.com/repos/${repo}/git/trees/main?recursive=1`);
                 if (!res.ok) {
-                    // Fallback to master branch
                     res = await fetch(`https://api.github.com/repos/${repo}/git/trees/master?recursive=1`);
                 }
                 
@@ -227,7 +263,6 @@
                 fileTable.classList.remove('hidden');
                 renderAll();
                 
-                // Double check title update after data load
                 document.title = repo;
             } catch (err) {
                 document.getElementById('repo-status').textContent = `Load failed: ${err.message}`;

@@ -30,7 +30,6 @@
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* Row hover and selection states */
         .file-row { 
             border-bottom: 1px solid #21262d; 
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -38,7 +37,6 @@
         .file-row:hover { background-color: rgba(88, 166, 255, 0.05); }
         .file-row.selected { background-color: rgba(88, 166, 255, 0.15); }
         
-        /* Sticky table header */
         thead th {
             position: sticky;
             top: 0;
@@ -57,7 +55,6 @@
         .breadcrumb-item { transition: color 0.2s; white-space: nowrap; }
         .breadcrumb-item:hover { color: var(--accent-blue); text-decoration: underline; }
         
-        /* Responsive Preview Panel */
         #preview-panel {
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             background-color: rgba(13, 17, 23, 0.95);
@@ -113,7 +110,6 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* Responsive table behavior */
         @media (max-width: 640px) {
             thead th:not(:first-child) { display: none; }
             .file-row td:not(:first-child) { display: none; }
@@ -122,17 +118,16 @@
 </head>
 <body>
 
-    <!-- Navigation Header -->
     <nav class="px-4 md:px-8 py-5 border-b border-[#30363d] flex items-center bg-[#0d1117]/80 backdrop-blur-md sticky top-0 z-30 overflow-hidden">
         <div id="breadcrumb-container" class="flex items-center gap-2 text-sm text-[#8b949e] font-semibold overflow-x-auto no-scrollbar whitespace-nowrap min-w-0">
-            <i class="fa-brands fa-github text-lg md:text-xl text-white mr-1 flex-shrink-0 cursor-pointer" onclick="location.reload()"></i>
+            <i class="fa-brands fa-github text-lg md:text-xl text-white mr-1 flex-shrink-0 cursor-pointer" onclick="window.location.href=window.location.pathname"></i>
             <span id="repo-status" class="truncate">Select a Repository...</span>
         </div>
     </nav>
 
     <div class="flex flex-1 overflow-hidden relative">
         <main class="flex-1 overflow-y-auto no-scrollbar relative">
-            <!-- Loading Screen -->
+            
             <div id="loading-overlay" class="hidden absolute inset-0 bg-[#0d1117] z-50 flex flex-col items-center justify-center">
                 <div class="relative flex items-center justify-center">
                     <div class="w-12 h-12 md:w-16 md:h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full spinner"></div>
@@ -141,7 +136,6 @@
                 <p class="mt-6 text-xs md:text-sm font-bold tracking-[0.2em] text-[#8b949e]">INDEXING REPOSITORY</p>
             </div>
 
-            <!-- Landing Page View -->
             <div id="empty-view" class="flex flex-col items-center justify-center h-full text-center px-6">
                 <div class="relative mb-8">
                     <div class="w-32 h-32 bg-blue-500/10 rounded-full blur-3xl absolute -top-4 -left-4"></div>
@@ -149,16 +143,15 @@
                 </div>
                 <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-4 logo-gradient tracking-tight">CodeVantage</h2>
                 <p class="text-[#8b949e] max-w-md leading-relaxed mb-8 text-sm md:text-base">
-                    A high-performance viewport for GitHub source code. Paste <code>?repo=user/project</code> in the URL to explore.
+                    A high-performance viewport for GitHub source code. Append <code>?repo=user/project</code> to the URL to start exploring.
                 </p>
                 <div class="flex flex-wrap justify-center gap-4">
-                    <a href="?repo=python/cpython" class="px-8 py-3 bg-[#21262d] border border-[#30363d] rounded-full text-xs md:text-sm font-bold hover:bg-[#30363d] transition-all text-white flex items-center gap-2">
+                    <button onclick="explore('python/cpython')" class="px-8 py-3 bg-[#21262d] border border-[#30363d] rounded-full text-xs md:text-sm font-bold hover:bg-[#30363d] transition-all text-white flex items-center gap-2">
                         <i class="fa-brands fa-python"></i> Explore python/cpython
-                    </a>
+                    </button>
                 </div>
             </div>
 
-            <!-- File Explorer Table -->
             <div class="overflow-x-auto">
                 <table id="file-table" class="w-full text-left text-sm hidden min-w-full">
                     <thead>
@@ -174,7 +167,6 @@
             </div>
         </main>
 
-        <!-- Preview Panel (Side Drawer) -->
         <aside id="preview-panel" class="flex flex-col">
             <div class="p-4 md:p-6 border-b border-[#30363d] flex justify-between items-center">
                 <div class="flex items-center gap-3">
@@ -235,7 +227,23 @@
             'md': 'fa-brands fa-markdown text-blue-300',
             'png': 'fa-solid fa-image text-purple-400',
             'jpg': 'fa-solid fa-image text-purple-400',
-            'svg': 'fa-solid fa-file-code text-pink-400'
+            'svg': 'fa-solid fa-file-code text-pink-400',
+            'c': 'fa-solid fa-file-code text-blue-400',
+            'cpp': 'fa-solid fa-file-code text-blue-600',
+            'h': 'fa-solid fa-file-medical text-purple-400',
+            'hpp': 'fa-solid fa-file-medical text-purple-500',
+            'rs': 'fa-brands fa-rust text-orange-600',
+            'go': 'fa-solid fa-file-code text-cyan-500',
+            'php': 'fa-brands fa-php text-indigo-400',
+            'rb': 'fa-solid fa-gem text-red-500',
+            'cs': 'fa-solid fa-file-code text-green-600',
+            'sh': 'fa-solid fa-terminal text-green-400',
+            'yml': 'fa-solid fa-gears text-purple-300',
+            'yaml': 'fa-solid fa-gears text-purple-300',
+            'txt': 'fa-solid fa-file-lines text-gray-400',
+            'pdf': 'fa-solid fa-file-pdf text-red-400',
+            'gitattributes': 'fa-brands fa-git text-orange-500',
+            'gitignore': 'fa-brands fa-git text-orange-500'
         };
 
         const elements = {
@@ -250,13 +258,12 @@
             repoStatus: document.getElementById('repo-status')
         };
 
-        // Initialize and handle URL parameters
         window.onload = async () => {
             const urlParams = new URLSearchParams(window.location.search);
             let rawRepo = urlParams.get('repo');
 
             if (rawRepo) {
-                rawRepo = rawRepo.replace(/^https?:\/\/github\.com\//, '');
+                rawRepo = rawRepo.trim().replace(/^https?:\/\/github\.com\//, '');
                 const parts = rawRepo.split('/').filter(p => p);
                 if (parts.length >= 2) {
                     const repo = `${parts[0]}/${parts[1]}`;
@@ -268,28 +275,37 @@
             }
         };
 
-        // Fetch repository tree from GitHub API
+        function explore(repo) {
+            window.location.search = `?repo=${repo}`;
+        }
+
         async function fetchRepo(repo, targetPath) {
             elements.load.classList.remove('hidden');
+            elements.empty.classList.add('hidden');
+            
             try {
                 let res = await fetch(`https://api.github.com/repos/${repo}/git/trees/main?recursive=1`);
                 if (!res.ok) res = await fetch(`https://api.github.com/repos/${repo}/git/trees/master?recursive=1`);
-                if (!res.ok) throw new Error('Repository Not Accessible');
+                
+                if (!res.ok) {
+                    if (res.status === 403) throw new Error('API Rate Limited (Try again later)');
+                    if (res.status === 404) throw new Error('Repository Not Found');
+                    throw new Error('Access Denied');
+                }
                 
                 const data = await res.json();
                 buildFS(repo, data.tree, targetPath);
                 pathStack = [virtualFileSystem];
-                elements.empty.classList.add('hidden');
                 elements.table.classList.remove('hidden');
                 render();
             } catch (err) {
                 elements.repoStatus.innerHTML = `<span class="text-red-400">Error: ${err.message}</span>`;
+                elements.empty.classList.remove('hidden');
             } finally {
                 elements.load.classList.add('hidden');
             }
         }
 
-        // Build in-memory virtual file system
         function buildFS(repoName, tree, targetPath) {
             const prefix = targetPath ? targetPath.replace(/^\/+|\/+$/g, '') + '/' : '';
             virtualFileSystem = { name: repoName.split('/').pop(), kind: 'directory', children: {} };
@@ -320,9 +336,8 @@
             });
         }
 
-        // Render current directory content
         function render() {
-            elements.bread.innerHTML = `<i class="fa-brands fa-github text-lg text-white mr-2 cursor-pointer" onclick="location.reload()"></i>`;
+            elements.bread.innerHTML = `<i class="fa-brands fa-github text-lg text-white mr-2 cursor-pointer" onclick="window.location.href=window.location.pathname"></i>`;
             pathStack.forEach((node, idx) => {
                 const el = document.createElement('span');
                 el.className = "breadcrumb-item cursor-pointer";
@@ -341,7 +356,6 @@
             const cur = pathStack[pathStack.length - 1];
             const children = Object.values(cur.children || {}).sort((a,b) => a.kind !== b.kind ? (a.kind === 'directory' ? -1 : 1) : a.name.localeCompare(b.name));
 
-            // Back navigation
             if (pathStack.length > 1) {
                 const tr = document.createElement('tr');
                 tr.className = "file-row cursor-pointer";
@@ -350,7 +364,6 @@
                 elements.list.appendChild(tr);
             }
 
-            // List items
             children.forEach(node => {
                 const tr = document.createElement('tr');
                 tr.className = `file-row cursor-pointer ${currentSelectedNode === node ? 'selected' : ''}`;
@@ -375,7 +388,6 @@
             });
         }
 
-        // Open preview panel with file content
         async function openPreview(node) {
             elements.panel.classList.add('open');
             document.getElementById('preview-filename').textContent = node.name;
@@ -402,12 +414,36 @@
                     img.src = `data:image/${ext === 'svg' ? 'svg+xml' : ext};base64,${data.content.replace(/\s/g, '')}`;
                     elements.media.appendChild(img);
                 } else {
-                    elements.text.textContent = atob(data.content.replace(/\s/g, ''));
+                    // Handle UTF-8 decoding properly
+                    const decoded = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+                    elements.text.textContent = decoded;
                 }
-            } catch (e) { elements.text.textContent = '// Failed to decode file content.'; }
+            } catch (e) { elements.text.textContent = '// Unable to decode file content.'; }
         }
 
-        // Helper: Format bytes to human readable size
         function formatSize(b) {
             if (!b || b === 0) return '0 B';
-            const k = 1024, sizes = ['B', 'KB', 'MB
+            const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'], i = Math.floor(Math.log(b) / Math.log(k));
+            return parseFloat((b / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function closePreview() { elements.panel.classList.remove('open'); currentSelectedNode = null; render(); }
+        
+        function copyContent() {
+            const text = elements.text.textContent;
+            const dummy = document.createElement("textarea");
+            document.body.appendChild(dummy);
+            dummy.value = text;
+            dummy.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+        }
+
+        document.addEventListener('mousedown', (e) => {
+            if (window.innerWidth < 1024 && elements.panel.classList.contains('open') && !e.target.closest('#preview-panel') && !e.target.closest('.file-row')) {
+                closePreview();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -190,14 +190,17 @@
             let rawRepo = urlParams.get('repo');
 
             if (rawRepo) {
+                // Remove protocol if user pastes full URL by mistake
+                rawRepo = rawRepo.replace(/^https?:\/\/github\.com\//, '');
+                
                 const parts = rawRepo.split('/').filter(p => p);
                 if (parts.length >= 2) {
                     const repo = `${parts[0]}/${parts[1]}`;
                     const path = parts.slice(2).join('/');
                     isGitHubMode = true;
                     
-                    // Update website title dynamically
-                    document.title = `${repo} - GitHub Explorer`;
+                    // Update website title and UI header
+                    document.title = repo; 
                     document.getElementById('repo-status').textContent = `Repository: ${repo}`;
                     
                     await loadGitHubRepo(repo, path);
@@ -208,9 +211,14 @@
         async function loadGitHubRepo(repo, targetPath) {
             loadingOverlay.classList.remove('hidden');
             try {
+                // Try main branch first
                 let res = await fetch(`https://api.github.com/repos/${repo}/git/trees/main?recursive=1`);
-                if (!res.ok) res = await fetch(`https://api.github.com/repos/${repo}/git/trees/master?recursive=1`);
-                if (!res.ok) throw new Error('Repository not found');
+                if (!res.ok) {
+                    // Fallback to master branch
+                    res = await fetch(`https://api.github.com/repos/${repo}/git/trees/master?recursive=1`);
+                }
+                
+                if (!res.ok) throw new Error('Repository or branch not found');
                 
                 const data = await res.json();
                 buildGitHubFileSystem(repo, data.tree, targetPath);
@@ -218,6 +226,9 @@
                 emptyView.classList.add('hidden');
                 fileTable.classList.remove('hidden');
                 renderAll();
+                
+                // Double check title update after data load
+                document.title = repo;
             } catch (err) {
                 document.getElementById('repo-status').textContent = `Load failed: ${err.message}`;
             } finally {

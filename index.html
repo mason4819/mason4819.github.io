@@ -1,449 +1,157 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeVantage | Repository Explorer</title>
+    <title>Web ADB - Debug Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-main: #0d1117;
-            --bg-secondary: #161b22;
-            --accent-blue: #58a6ff;
-            --border-color: #30363d;
-            --text-primary: #c9d1d9;
-            --text-secondary: #8b949e;
+            --color-canvas-default: #0d1117;
+            --color-border-default: #30363d;
+            --color-accent-fg: #58a6ff;
         }
-
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-primary);
-            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        .file-row { 
-            border-bottom: 1px solid #21262d; 
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .file-row:hover { background-color: rgba(88, 166, 255, 0.05); }
-        .file-row.selected { background-color: rgba(88, 166, 255, 0.15); }
-        
-        thead th {
-            position: sticky;
-            top: 0;
-            background: var(--bg-main);
-            z-index: 10;
-            box-shadow: inset 0 -1px 0 var(--border-color);
-            font-weight: 600;
-            color: var(--text-secondary);
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            padding: 1rem 1.5rem;
-            white-space: nowrap;
-        }
-        
-        .breadcrumb-item { transition: color 0.2s; white-space: nowrap; }
-        .breadcrumb-item:hover { color: var(--accent-blue); text-decoration: underline; }
-        
-        #preview-panel {
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            background-color: rgba(13, 17, 23, 0.95);
-            backdrop-filter: blur(25px);
-            border-left: 1px solid var(--border-color);
-            position: fixed;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            z-index: 50;
-            transform: translateX(100%);
-            box-shadow: -20px 0 50px rgba(0,0,0,0.5);
-            width: 100%;
-        }
-
-        #preview-panel.open { transform: translateX(0); }
-
-        @media (min-width: 1024px) {
-            #preview-panel {
-                position: relative;
-                transform: translateX(0);
-                width: 0;
-                visibility: hidden;
-            }
-            #preview-panel.open {
-                width: 450px;
-                visibility: visible;
-            }
-        }
-
-        .spinner { animation: rotate 1.5s linear infinite; }
-        @keyframes rotate { 100% { transform: rotate(360deg); } }
-
-        .media-preview {
-            max-width: 100%;
-            height: auto;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-        }
-
-        pre {
-            font-family: 'JetBrains Mono', monospace;
-            scrollbar-width: thin;
-            scrollbar-color: #30363d transparent;
-            word-wrap: break-word;
-            white-space: pre-wrap;
-        }
-
-        .logo-gradient {
-            background: linear-gradient(135deg, #58a6ff 0%, #bc8cff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        @media (max-width: 640px) {
-            thead th:not(:first-child) { display: none; }
-            .file-row td:not(:first-child) { display: none; }
-        }
+        body { background-color: var(--color-canvas-default); color: #c9d1d9; font-family: -apple-system, system-ui, sans-serif; }
+        .github-card { background-color: #161b22; border: 1px solid var(--color-border-default); border-radius: 6px; }
+        .console-box { background-color: #010409; border: 1px solid #30363d; font-family: ui-monospace, SFMono-Regular, monospace; }
     </style>
 </head>
-<body>
+<body class="p-4 sm:p-8">
+    <div class="max-w-3xl mx-auto">
+        <header class="mb-8 border-b border-gray-700 pb-4">
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+                <i class="fa-brands fa-github text-3xl"></i>
+                WebADB 診斷工具
+            </h1>
+            <p id="env-check" class="text-sm mt-2"></p>
+        </header>
 
-    <nav class="px-4 md:px-8 py-5 border-b border-[#30363d] flex items-center bg-[#0d1117]/80 backdrop-blur-md sticky top-0 z-30 overflow-hidden">
-        <div id="breadcrumb-container" class="flex items-center gap-2 text-sm text-[#8b949e] font-semibold overflow-x-auto no-scrollbar whitespace-nowrap min-w-0">
-            <i class="fa-brands fa-github text-lg md:text-xl text-white mr-1 flex-shrink-0 cursor-pointer" onclick="window.location.href=window.location.pathname"></i>
-            <span id="repo-status" class="truncate">Select a Repository...</span>
-        </div>
-    </nav>
-
-    <div class="flex flex-1 overflow-hidden relative">
-        <main class="flex-1 overflow-y-auto no-scrollbar relative">
-            
-            <div id="loading-overlay" class="hidden absolute inset-0 bg-[#0d1117] z-50 flex flex-col items-center justify-center">
-                <div class="relative flex items-center justify-center">
-                    <div class="w-12 h-12 md:w-16 md:h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full spinner"></div>
-                    <i class="fa-brands fa-github text-xl md:text-2xl absolute"></i>
-                </div>
-                <p class="mt-6 text-xs md:text-sm font-bold tracking-[0.2em] text-[#8b949e]">INDEXING REPOSITORY</p>
-            </div>
-
-            <div id="empty-view" class="flex flex-col items-center justify-center h-full text-center px-6">
-                <div class="relative mb-8">
-                    <div class="w-32 h-32 bg-blue-500/10 rounded-full blur-3xl absolute -top-4 -left-4"></div>
-                    <i class="fa-brands fa-github text-6xl md:text-8xl text-[#30363d]"></i>
-                </div>
-                <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-4 logo-gradient tracking-tight">CodeVantage</h2>
-                <p class="text-[#8b949e] max-w-md leading-relaxed mb-8 text-sm md:text-base">
-                    A high-performance viewport for GitHub source code. Append <code>?repo=user/project</code> to the URL to start exploring.
-                </p>
-                <div class="flex flex-wrap justify-center gap-4">
-                    <button onclick="explore('python/cpython')" class="px-8 py-3 bg-[#21262d] border border-[#30363d] rounded-full text-xs md:text-sm font-bold hover:bg-[#30363d] transition-all text-white flex items-center gap-2">
-                        <i class="fa-brands fa-python"></i> Explore python/cpython
+        <div class="grid gap-6">
+            <!-- 連線區塊 -->
+            <div class="github-card p-6">
+                <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-terminal text-blue-400 text-sm"></i> 
+                    第一步：建立通訊
+                </h2>
+                
+                <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <button id="btn-request" class="bg-[#238636] hover:bg-[#2ea043] text-white px-6 py-2 rounded-md font-medium transition-all">
+                        選取並連接裝置
+                    </button>
+                    <button id="btn-clear" class="border border-[#30363d] hover:bg-[#21262d] px-4 py-2 rounded-md text-sm">
+                        清空日誌
                     </button>
                 </div>
+
+                <div id="status-panel" class="text-sm space-y-2 text-gray-400">
+                    <div class="flex items-center gap-2">
+                        <span id="indicator" class="w-2 h-2 rounded-full bg-gray-600"></span>
+                        狀態: <span id="status-text">未偵測到動作</span>
+                    </div>
+                </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table id="file-table" class="w-full text-left text-sm hidden min-w-full">
-                    <thead>
-                        <tr>
-                            <th class="w-full sm:w-auto">Name</th>
-                            <th class="hidden sm:table-cell">Format</th>
-                            <th class="hidden lg:table-cell">Git Hash</th>
-                            <th class="text-right px-6">Size</th>
-                        </tr>
-                    </thead>
-                    <tbody id="file-list"></tbody>
-                </table>
+            <!-- 日誌輸出區塊 -->
+            <div class="github-card p-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-semibold text-gray-500 uppercase">輸出日誌 (Console Output)</span>
+                </div>
+                <div id="console" class="console-box h-80 overflow-y-auto p-4 text-xs leading-relaxed space-y-1">
+                    <div class="text-gray-500">// 系統日誌將顯示於此...</div>
+                </div>
             </div>
-        </main>
 
-        <aside id="preview-panel" class="flex flex-col">
-            <div class="p-4 md:p-6 border-b border-[#30363d] flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <span class="text-[10px] md:text-[11px] font-black uppercase tracking-widest text-[#8b949e]">Inspector</span>
-                </div>
-                <button onclick="closePreview()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#30363d] text-[#8b949e] hover:text-white transition-colors">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+            <!-- 常見問題引導 -->
+            <div class="text-xs text-gray-500 space-y-1 opacity-70">
+                <p class="font-bold">連線沒反應？</p>
+                <ul class="list-disc pl-4 space-y-1">
+                    <li>檢查是否為 HTTPS 環境 (或 localhost)。</li>
+                    <li>檢查手機是否已開啟「USB 偵錯」。</li>
+                    <li>更換傳輸線（有些線只能充電不能傳輸）。</li>
+                    <li>關閉電腦端正在運行的 ADB 軟體。</li>
+                </ul>
             </div>
-            
-            <div class="flex-1 p-4 md:p-8 overflow-y-auto no-scrollbar">
-                <div class="flex flex-col items-center mb-8">
-                    <div class="w-20 h-20 md:w-24 md:h-24 bg-[#161b22] border border-[#30363d] rounded-2xl flex items-center justify-center mb-6 shadow-2xl">
-                        <i id="preview-icon" class="fa-solid fa-file text-4xl md:text-5xl"></i>
-                    </div>
-                    <h4 id="preview-filename" class="text-lg md:text-xl font-extrabold text-white break-all text-center leading-tight"></h4>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4 md:gap-6 mb-8">
-                    <div class="space-y-1">
-                        <p class="text-[10px] font-bold text-[#484f58] uppercase">Extension</p>
-                        <p id="preview-type" class="text-xs md:text-sm font-mono text-white"></p>
-                    </div>
-                    <div class="space-y-1 text-right">
-                        <p class="text-[10px] font-bold text-[#484f58] uppercase">Size</p>
-                        <p id="preview-size" class="text-xs md:text-sm font-mono text-white"></p>
-                    </div>
-                </div>
-                
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <p class="text-[10px] md:text-[11px] font-black text-[#8b949e] uppercase tracking-widest">Source Preview</p>
-                        <button onclick="copyContent()" class="text-[10px] font-bold text-blue-400 hover:text-blue-300">COPY CONTENT</button>
-                    </div>
-                    <div id="media-container" class="hidden"></div>
-                    <pre id="file-text-content" class="bg-[#010409] text-[#c9d1d9] p-4 md:p-6 rounded-2xl text-[11px] md:text-[12px] font-mono leading-relaxed border border-[#30363d] overflow-x-auto min-h-[300px]"></pre>
-                </div>
-            </div>
-        </aside>
+        </div>
     </div>
 
-    <script>
-        let virtualFileSystem = null;
-        let pathStack = []; 
-        let currentSelectedNode = null;
+    <!-- 核心邏輯 -->
+    <script type="module">
+        import { Adb, AdbWebUsbBackend, AdbAuthenticators } from 'https://esm.sh/@yume-chan/adb@0.0.23';
 
-        const iconMap = {
-            'js': 'fa-brands fa-js text-yellow-400',
-            'jsx': 'fa-brands fa-react text-blue-300',
-            'ts': 'fa-solid fa-file-code text-blue-500',
-            'tsx': 'fa-brands fa-react text-cyan-400',
-            'vue': 'fa-brands fa-vuejs text-emerald-500',
-            'html': 'fa-brands fa-html5 text-orange-500',
-            'css': 'fa-brands fa-css3-alt text-blue-400',
-            'py': 'fa-brands fa-python text-[#3776ab]',
-            'java': 'fa-brands fa-java text-red-500',
-            'json': 'fa-solid fa-file-code text-yellow-500',
-            'md': 'fa-brands fa-markdown text-blue-300',
-            'png': 'fa-solid fa-image text-purple-400',
-            'jpg': 'fa-solid fa-image text-purple-400',
-            'svg': 'fa-solid fa-file-code text-pink-400',
-            'c': 'fa-solid fa-file-code text-blue-400',
-            'cpp': 'fa-solid fa-file-code text-blue-600',
-            'h': 'fa-solid fa-file-medical text-purple-400',
-            'hpp': 'fa-solid fa-file-medical text-purple-500',
-            'rs': 'fa-brands fa-rust text-orange-600',
-            'go': 'fa-solid fa-file-code text-cyan-500',
-            'php': 'fa-brands fa-php text-indigo-400',
-            'rb': 'fa-solid fa-gem text-red-500',
-            'cs': 'fa-solid fa-file-code text-green-600',
-            'sh': 'fa-solid fa-terminal text-green-400',
-            'yml': 'fa-solid fa-gears text-purple-300',
-            'yaml': 'fa-solid fa-gears text-purple-300',
-            'txt': 'fa-solid fa-file-lines text-gray-400',
-            'pdf': 'fa-solid fa-file-pdf text-red-400',
-            'gitattributes': 'fa-brands fa-git text-orange-500',
-            'gitignore': 'fa-brands fa-git text-orange-500'
-        };
+        const btnRequest = document.getElementById('btn-request');
+        const btnClear = document.getElementById('btn-clear');
+        const consoleEl = document.getElementById('console');
+        const statusText = document.getElementById('status-text');
+        const indicator = document.getElementById('indicator');
+        const envCheck = document.getElementById('env-check');
 
-        const elements = {
-            empty: document.getElementById('empty-view'),
-            table: document.getElementById('file-table'),
-            list: document.getElementById('file-list'),
-            bread: document.getElementById('breadcrumb-container'),
-            panel: document.getElementById('preview-panel'),
-            load: document.getElementById('loading-overlay'),
-            media: document.getElementById('media-container'),
-            text: document.getElementById('file-text-content'),
-            repoStatus: document.getElementById('repo-status')
-        };
-
-        window.onload = async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            let rawRepo = urlParams.get('repo');
-
-            if (rawRepo) {
-                rawRepo = rawRepo.trim().replace(/^https?:\/\/github\.com\//, '');
-                const parts = rawRepo.split('/').filter(p => p);
-                if (parts.length >= 2) {
-                    const repo = `${parts[0]}/${parts[1]}`;
-                    const path = parts.slice(2).join('/');
-                    document.title = `${repo} | CodeVantage`;
-                    elements.repoStatus.textContent = repo;
-                    await fetchRepo(repo, path);
-                }
-            }
-        };
-
-        function explore(repo) {
-            window.location.search = `?repo=${repo}`;
+        // 1. 環境檢測
+        if (window.isSecureContext) {
+            envCheck.innerHTML = '<span class="text-green-500 font-medium">✓ 安全環境 (HTTPS/Localhost) 已就緒</span>';
+        } else {
+            envCheck.innerHTML = '<span class="text-red-500 font-medium">✗ 錯誤：非 HTTPS 環境，WebUSB 無法運行</span>';
+            btnRequest.disabled = true;
+            btnRequest.classList.add('opacity-50', 'cursor-not-allowed');
         }
 
-        async function fetchRepo(repo, targetPath) {
-            elements.load.classList.remove('hidden');
-            elements.empty.classList.add('hidden');
-            
+        function log(msg, type = 'info') {
+            const div = document.createElement('div');
+            const colors = {
+                info: 'text-gray-400',
+                success: 'text-green-400',
+                error: 'text-red-400',
+                warn: 'text-yellow-400'
+            };
+            div.className = colors[type] || 'text-gray-300';
+            div.innerHTML = `<span class="opacity-50 text-[10px] mr-2">${new Date().toLocaleTimeString()}</span> ${msg}`;
+            consoleEl.appendChild(div);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        btnClear.onclick = () => consoleEl.innerHTML = '';
+
+        btnRequest.onclick = async () => {
             try {
-                let res = await fetch(`https://api.github.com/repos/${repo}/git/trees/main?recursive=1`);
-                if (!res.ok) res = await fetch(`https://api.github.com/repos/${repo}/git/trees/master?recursive=1`);
+                log("正在請求 USB 裝置選取權限...");
+                const backend = await AdbWebUsbBackend.requestDevice();
                 
-                if (!res.ok) {
-                    if (res.status === 403) throw new Error('API Rate Limited (Try again later)');
-                    if (res.status === 404) throw new Error('Repository Not Found');
-                    throw new Error('Access Denied');
+                if (!backend) {
+                    log("使用者取消了裝置選取", "warn");
+                    return;
                 }
+
+                log(`已選取裝置: ${backend.serial || 'USB 裝置'}`, "info");
+                log("正在連線並進行金鑰握手... 請檢查手機螢幕是否有授權彈窗！", "warn");
                 
-                const data = await res.json();
-                buildFS(repo, data.tree, targetPath);
-                pathStack = [virtualFileSystem];
-                elements.table.classList.remove('hidden');
-                render();
+                statusText.textContent = "認證中...";
+                indicator.className = "w-2 h-2 rounded-full bg-yellow-500 animate-pulse";
+
+                // 2. 進行 ADB 認證
+                // 注意：這一步會觸發手機上的彈窗
+                const adb = await Adb.authenticate(backend, AdbAuthenticators.DEFAULT);
+
+                log("連線成功！", "success");
+                statusText.textContent = "已成功連線";
+                indicator.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]";
+                
+                // 3. 測試獲取資訊
+                const model = await adb.getProp("ro.product.model");
+                log(`設備型號識別: ${model}`, "success");
+                log("現在你可以擴展更多功能了。");
+
             } catch (err) {
-                elements.repoStatus.innerHTML = `<span class="text-red-400">Error: ${err.message}</span>`;
-                elements.empty.classList.remove('hidden');
-            } finally {
-                elements.load.classList.add('hidden');
-            }
-        }
-
-        function buildFS(repoName, tree, targetPath) {
-            const prefix = targetPath ? targetPath.replace(/^\/+|\/+$/g, '') + '/' : '';
-            virtualFileSystem = { name: repoName.split('/').pop(), kind: 'directory', children: {} };
-            
-            tree.forEach(item => {
-                if (prefix && !item.path.startsWith(prefix)) return;
-                const rel = prefix ? item.path.substring(prefix.length) : item.path;
-                if (!rel) return;
-
-                const parts = rel.split('/').filter(p => p);
-                let cur = virtualFileSystem;
+                console.error(err);
+                log(`連線過程中斷: ${err.message}`, "error");
+                statusText.textContent = "連線失敗";
+                indicator.className = "w-2 h-2 rounded-full bg-red-500";
                 
-                parts.forEach((part, i) => {
-                    if (i === parts.length - 1) {
-                        cur.children[part] = {
-                            name: part,
-                            kind: item.type === 'blob' ? 'file' : 'directory',
-                            size: item.size ? formatSize(item.size) : '-',
-                            sha: item.sha.substring(0, 7),
-                            url: item.url,
-                            children: item.type === 'tree' ? {} : null
-                        };
-                    } else {
-                        if (!cur.children[part]) cur.children[part] = { name: part, kind: 'directory', children: {} };
-                        cur = cur.children[part];
-                    }
-                });
-            });
-        }
-
-        function render() {
-            elements.bread.innerHTML = `<i class="fa-brands fa-github text-lg text-white mr-2 cursor-pointer" onclick="window.location.href=window.location.pathname"></i>`;
-            pathStack.forEach((node, idx) => {
-                const el = document.createElement('span');
-                el.className = "breadcrumb-item cursor-pointer";
-                el.textContent = node.name;
-                el.onclick = () => { pathStack = pathStack.slice(0, idx + 1); closePreview(); render(); };
-                elements.bread.appendChild(el);
-                if (idx < pathStack.length - 1) {
-                    const sep = document.createElement('span');
-                    sep.textContent = '/';
-                    sep.className = "mx-1 opacity-30 flex-shrink-0";
-                    elements.bread.appendChild(sep);
+                if (err.message.includes("Claims")) {
+                    log("提示：USB 介面已被另一個程式佔用 (可能是電腦的 adb server)。請執行 adb kill-server 後再試。", "warn");
                 }
-            });
-
-            elements.list.innerHTML = '';
-            const cur = pathStack[pathStack.length - 1];
-            const children = Object.values(cur.children || {}).sort((a,b) => a.kind !== b.kind ? (a.kind === 'directory' ? -1 : 1) : a.name.localeCompare(b.name));
-
-            if (pathStack.length > 1) {
-                const tr = document.createElement('tr');
-                tr.className = "file-row cursor-pointer";
-                tr.innerHTML = `<td class="px-6 py-4 flex items-center gap-3 text-blue-400" colspan="4"><i class="fa-solid fa-level-up-alt rotate-[-90deg] text-xs"></i><span class="font-bold">..</span></td>`;
-                tr.onclick = () => { pathStack.pop(); closePreview(); render(); };
-                elements.list.appendChild(tr);
             }
-
-            children.forEach(node => {
-                const tr = document.createElement('tr');
-                tr.className = `file-row cursor-pointer ${currentSelectedNode === node ? 'selected' : ''}`;
-                let ext = node.name.includes('.') ? node.name.split('.').pop().toLowerCase() : 'txt';
-                const icon = node.kind === 'directory' ? 'fa-solid fa-folder text-blue-400' : (iconMap[ext] || 'fa-solid fa-file text-[#8b949e]');
-                
-                tr.innerHTML = `
-                    <td class="px-6 py-4 flex items-center gap-4">
-                        <i class="${icon} text-lg w-6 text-center"></i>
-                        <span class="truncate text-white font-medium">${node.name}</span>
-                    </td>
-                    <td class="hidden sm:table-cell px-6 py-4 text-[#8b949e] font-mono text-[11px] font-bold tracking-widest">${node.kind === 'directory' ? 'FOLDER' : ext.toUpperCase()}</td>
-                    <td class="hidden lg:table-cell px-6 py-4 text-[#484f58] font-mono text-[11px]">${node.sha || '-'}</td>
-                    <td class="px-6 py-4 text-right text-[#8b949e] font-mono text-xs">${node.size}</td>
-                `;
-                tr.onclick = () => {
-                    currentSelectedNode = node;
-                    if (node.kind === 'file') { openPreview(node); render(); }
-                    else { pathStack.push(node); closePreview(); render(); }
-                };
-                elements.list.appendChild(tr);
-            });
-        }
-
-        async function openPreview(node) {
-            elements.panel.classList.add('open');
-            document.getElementById('preview-filename').textContent = node.name;
-            document.getElementById('preview-size').textContent = node.size;
-            let ext = node.name.includes('.') ? node.name.split('.').pop().toLowerCase() : 'txt';
-            document.getElementById('preview-icon').className = `${iconMap[ext] || 'fa-solid fa-file'} text-5xl`;
-            document.getElementById('preview-type').textContent = ext.toUpperCase() || 'RAW';
-
-            elements.media.innerHTML = '';
-            elements.media.classList.add('hidden');
-            elements.text.classList.remove('hidden');
-            elements.text.textContent = 'Streaming content...';
-
-            try {
-                const res = await fetch(node.url);
-                const data = await res.json();
-                const isImg = ['png','jpg','jpeg','gif','svg','webp'].includes(ext);
-
-                if (isImg) {
-                    elements.text.classList.add('hidden');
-                    elements.media.classList.remove('hidden');
-                    const img = document.createElement('img');
-                    img.className = 'media-preview';
-                    img.src = `data:image/${ext === 'svg' ? 'svg+xml' : ext};base64,${data.content.replace(/\s/g, '')}`;
-                    elements.media.appendChild(img);
-                } else {
-                    // Handle UTF-8 decoding properly
-                    const decoded = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
-                    elements.text.textContent = decoded;
-                }
-            } catch (e) { elements.text.textContent = '// Unable to decode file content.'; }
-        }
-
-        function formatSize(b) {
-            if (!b || b === 0) return '0 B';
-            const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'], i = Math.floor(Math.log(b) / Math.log(k));
-            return parseFloat((b / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-        }
-
-        function closePreview() { elements.panel.classList.remove('open'); currentSelectedNode = null; render(); }
-        
-        function copyContent() {
-            const text = elements.text.textContent;
-            const dummy = document.createElement("textarea");
-            document.body.appendChild(dummy);
-            dummy.value = text;
-            dummy.select();
-            document.execCommand("copy");
-            document.body.removeChild(dummy);
-        }
-
-        document.addEventListener('mousedown', (e) => {
-            if (window.innerWidth < 1024 && elements.panel.classList.contains('open') && !e.target.closest('#preview-panel') && !e.target.closest('.file-row')) {
-                closePreview();
-            }
-        });
+        };
     </script>
 </body>
 </html>
+

@@ -3,155 +3,324 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web ADB - Debug Edition</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Saturn</title>
     <style>
-        :root {
-            --color-canvas-default: #0d1117;
-            --color-border-default: #30363d;
-            --color-accent-fg: #58a6ff;
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            width: 100vw;
+            height: 100vh;
+            cursor: grab;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
         }
-        body { background-color: var(--color-canvas-default); color: #c9d1d9; font-family: -apple-system, system-ui, sans-serif; }
-        .github-card { background-color: #161b22; border: 1px solid var(--color-border-default); border-radius: 6px; }
-        .console-box { background-color: #010409; border: 1px solid #30363d; font-family: ui-monospace, SFMono-Regular, monospace; }
+        body:active {
+            cursor: grabbing;
+        }
+        canvas {
+            display: block;
+        }
+
+        #island-wrapper {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        #dynamic-island {
+            background: rgba(15, 15, 15, 0.85);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 50px;
+            padding: 10px 22px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: auto;
+            cursor: pointer;
+            box-shadow: 0 15px 45px rgba(0,0,0,0.6);
+            min-width: 200px;
+            overflow: hidden;
+            color: white;
+        }
+
+        #dynamic-island.expanded {
+            border-radius: 32px;
+            padding: 25px 30px;
+            flex-direction: column;
+            align-items: flex-start;
+            min-width: 320px;
+        }
+
+        .island-compact {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .island-content {
+            display: none;
+            width: 100%;
+            margin-top: 20px;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.4s ease;
+        }
+
+        #dynamic-island.expanded .island-content {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .info-group {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .info-label {
+            font-size: 11px;
+            color: rgba(226, 209, 163, 0.9);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+        }
+
+        .info-value {
+            font-size: 15px;
+            font-weight: 500;
+            font-family: 'JetBrains Mono', 'Menlo', monospace;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
-<body class="p-4 sm:p-8">
-    <div class="max-w-3xl mx-auto">
-        <header class="mb-8 border-b border-gray-700 pb-4">
-            <h1 class="text-2xl font-bold flex items-center gap-2">
-                <i class="fa-brands fa-github text-3xl"></i>
-                WebADB 診斷工具
-            </h1>
-            <p id="env-check" class="text-sm mt-2"></p>
-        </header>
+<body>
 
-        <div class="grid gap-6">
-            <!-- 連線區塊 -->
-            <div class="github-card p-6">
-                <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-terminal text-blue-400 text-sm"></i> 
-                    第一步：建立通訊
-                </h2>
-                
-                <div class="flex flex-col sm:flex-row gap-4 mb-4">
-                    <button id="btn-request" class="bg-[#238636] hover:bg-[#2ea043] text-white px-6 py-2 rounded-md font-medium transition-all">
-                        選取並連接裝置
-                    </button>
-                    <button id="btn-clear" class="border border-[#30363d] hover:bg-[#21262d] px-4 py-2 rounded-md text-sm">
-                        清空日誌
-                    </button>
-                </div>
-
-                <div id="status-panel" class="text-sm space-y-2 text-gray-400">
-                    <div class="flex items-center gap-2">
-                        <span id="indicator" class="w-2 h-2 rounded-full bg-gray-600"></span>
-                        狀態: <span id="status-text">未偵測到動作</span>
-                    </div>
-                </div>
+<div id="island-wrapper">
+    <div id="dynamic-island" onclick="toggleIsland()">
+        <div class="island-compact">
+            <div class="status-indicator">
+                <span id="compact-ip">0.0.0.0</span>
             </div>
+            <span id="compact-ping">-- ms</span>
+        </div>
 
-            <!-- 日誌輸出區塊 -->
-            <div class="github-card p-4">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-xs font-semibold text-gray-500 uppercase">輸出日誌 (Console Output)</span>
+        <div class="island-content">
+            <div class="info-group">
+                <div class="info-row">
+                    <span class="info-label"></span>
+                    <span class="info-value" id="full-ip">0.0.0.0</span>
                 </div>
-                <div id="console" class="console-box h-80 overflow-y-auto p-4 text-xs leading-relaxed space-y-1">
-                    <div class="text-gray-500">// 系統日誌將顯示於此...</div>
+                <div class="info-row">
+                    <span class="info-label"></span>
+                    <span class="info-value" id="full-ping" style="color: #e2d1a3;">-- ms</span>
                 </div>
-            </div>
-
-            <!-- 常見問題引導 -->
-            <div class="text-xs text-gray-500 space-y-1 opacity-70">
-                <p class="font-bold">連線沒反應？</p>
-                <ul class="list-disc pl-4 space-y-1">
-                    <li>檢查是否為 HTTPS 環境 (或 localhost)。</li>
-                    <li>檢查手機是否已開啟「USB 偵錯」。</li>
-                    <li>更換傳輸線（有些線只能充電不能傳輸）。</li>
-                    <li>關閉電腦端正在運行的 ADB 軟體。</li>
-                </ul>
+                <div class="info-row">
+                    <span class="info-label"></span>
+                    <span class="info-value" id="node-loc"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"></span>
+                    <span class="info-value"></span>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- 核心邏輯 -->
-    <script type="module">
-        import { Adb, AdbWebUsbBackend, AdbAuthenticators } from 'https://esm.sh/@yume-chan/adb@0.0.23';
+<!-- 載入核心庫 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
-        const btnRequest = document.getElementById('btn-request');
-        const btnClear = document.getElementById('btn-clear');
-        const consoleEl = document.getElementById('console');
-        const statusText = document.getElementById('status-text');
-        const indicator = document.getElementById('indicator');
-        const envCheck = document.getElementById('env-check');
+<script>
+    let scene, camera, renderer, controls, saturn, rings;
 
-        // 1. 環境檢測
-        if (window.isSecureContext) {
-            envCheck.innerHTML = '<span class="text-green-500 font-medium">✓ 安全環境 (HTTPS/Localhost) 已就緒</span>';
-        } else {
-            envCheck.innerHTML = '<span class="text-red-500 font-medium">✗ 錯誤：非 HTTPS 環境，WebUSB 無法運行</span>';
-            btnRequest.disabled = true;
-            btnRequest.classList.add('opacity-50', 'cursor-not-allowed');
+    function init() {
+        scene = new THREE.Scene();
+
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 5000);
+        camera.position.set(0, 40, 140);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.body.appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; 
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 60;   
+        controls.maxDistance = 800;  
+
+        const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        mainLight.position.set(100, 100, 100);
+        scene.add(mainLight);
+
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        backLight.position.set(-100, -50, -100);
+        scene.add(backLight);
+
+        const ambient = new THREE.AmbientLight(0x444444);
+        scene.add(ambient);
+
+        const saturnGeometry = new THREE.SphereGeometry(25, 128, 128);
+        const saturnCanvas = document.createElement('canvas');
+        saturnCanvas.width = 1024;
+        saturnCanvas.height = 512;
+        const ctx = saturnCanvas.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 0, 512);
+        grad.addColorStop(0, '#3d362a');
+        grad.addColorStop(0.2, '#c5ab6e');
+        grad.addColorStop(0.4, '#e2d1a3');
+        grad.addColorStop(0.5, '#f0e6cc');
+        grad.addColorStop(0.6, '#e2d1a3');
+        grad.addColorStop(0.8, '#a28a5e');
+        grad.addColorStop(1, '#3d362a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 1024, 512);
+        
+        for(let i=0; i<40; i++) {
+            ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.05})`;
+            ctx.fillRect(0, Math.random()*512, 1024, Math.random()*5);
         }
 
-        function log(msg, type = 'info') {
-            const div = document.createElement('div');
-            const colors = {
-                info: 'text-gray-400',
-                success: 'text-green-400',
-                error: 'text-red-400',
-                warn: 'text-yellow-400'
-            };
-            div.className = colors[type] || 'text-gray-300';
-            div.innerHTML = `<span class="opacity-50 text-[10px] mr-2">${new Date().toLocaleTimeString()}</span> ${msg}`;
-            consoleEl.appendChild(div);
-            consoleEl.scrollTop = consoleEl.scrollHeight;
+        const saturnTex = new THREE.CanvasTexture(saturnCanvas);
+        saturn = new THREE.Mesh(saturnGeometry, new THREE.MeshPhongMaterial({ map: saturnTex, shininess: 15 }));
+        saturn.rotation.z = Math.PI * 0.13;
+        scene.add(saturn);
+
+        const ringInner = 31;
+        const ringOuter = 58;
+        const ringGeo = new THREE.RingGeometry(ringInner, ringOuter, 256);
+        const ringCanvas = document.createElement('canvas');
+        ringCanvas.width = 1024; ringCanvas.height = 1;
+        const rctx = ringCanvas.getContext('2d');
+        const ringGrad = rctx.createLinearGradient(0, 0, 1024, 0);
+        ringGrad.addColorStop(0, 'rgba(60, 50, 40, 0)');
+        ringGrad.addColorStop(0.1, 'rgba(165, 140, 90, 0.7)');
+        ringGrad.addColorStop(0.4, 'rgba(197, 171, 110, 0.9)');
+        ringGrad.addColorStop(0.48, 'rgba(0, 0, 0, 0.1)');
+        ringGrad.addColorStop(0.52, 'rgba(180, 160, 120, 0.8)');
+        ringGrad.addColorStop(0.8, 'rgba(100, 80, 60, 0.4)');
+        ringGrad.addColorStop(1, 'rgba(60, 50, 40, 0)');
+        rctx.fillStyle = ringGrad;
+        rctx.fillRect(0, 0, 1024, 1);
+
+        const pos = ringGeo.attributes.position;
+        const v3 = new THREE.Vector3();
+        for (let i = 0; i < pos.count; i++) {
+            v3.fromBufferAttribute(pos, i);
+            const d = v3.length();
+            const u = (d - ringInner) / (ringOuter - ringInner);
+            ringGeo.attributes.uv.setXY(i, u, 0.5);
         }
 
-        btnClear.onclick = () => consoleEl.innerHTML = '';
+        rings = new THREE.Mesh(ringGeo, new THREE.MeshPhongMaterial({ map: new THREE.CanvasTexture(ringCanvas), side: THREE.DoubleSide, transparent: true, opacity: 0.85, shininess: 30 }));
+        rings.rotation.x = Math.PI / 2;
+        const ringGroup = new THREE.Group();
+        ringGroup.add(rings);
+        ringGroup.rotation.z = Math.PI * 0.13;
+        scene.add(ringGroup);
 
-        btnRequest.onclick = async () => {
-            try {
-                log("正在請求 USB 裝置選取權限...");
-                const backend = await AdbWebUsbBackend.requestDevice();
-                
-                if (!backend) {
-                    log("使用者取消了裝置選取", "warn");
-                    return;
-                }
+        const starGeo = new THREE.BufferGeometry();
+        const starPos = [];
+        for (let i = 0; i < 8000; i++) starPos.push((Math.random() - 0.5) * 3000, (Math.random() - 0.5) * 3000, (Math.random() - 0.5) * 3000);
+        starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+        scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.8 })));
 
-                log(`已選取裝置: ${backend.serial || 'USB 裝置'}`, "info");
-                log("正在連線並進行金鑰握手... 請檢查手機螢幕是否有授權彈窗！", "warn");
-                
-                statusText.textContent = "認證中...";
-                indicator.className = "w-2 h-2 rounded-full bg-yellow-500 animate-pulse";
+        window.addEventListener('resize', onResize);
+        animate();
+        startNetworkMonitoring();
+    }
 
-                // 2. 進行 ADB 認證
-                // 注意：這一步會觸發手機上的彈窗
-                const adb = await Adb.authenticate(backend, AdbAuthenticators.DEFAULT);
+    function onResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
 
-                log("連線成功！", "success");
-                statusText.textContent = "已成功連線";
-                indicator.className = "w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]";
-                
-                // 3. 測試獲取資訊
-                const model = await adb.getProp("ro.product.model");
-                log(`設備型號識別: ${model}`, "success");
-                log("現在你可以擴展更多功能了。");
+    function animate() {
+        requestAnimationFrame(animate);
+        saturn.rotation.y += 0.0015;
+        controls.update();
+        renderer.render(scene, camera);
+    }
 
-            } catch (err) {
-                console.error(err);
-                log(`連線過程中斷: ${err.message}`, "error");
-                statusText.textContent = "連線失敗";
-                indicator.className = "w-2 h-2 rounded-full bg-red-500";
-                
-                if (err.message.includes("Claims")) {
-                    log("提示：USB 介面已被另一個程式佔用 (可能是電腦的 adb server)。請執行 adb kill-server 後再試。", "warn");
-                }
+    function toggleIsland() {
+        document.getElementById('dynamic-island').classList.toggle('expanded');
+    }
+
+    async function startNetworkMonitoring() {
+        let currentIP = "0.0.0.0";
+
+        try {
+            const res = await fetch('https://api.ipify.org?format=json');
+            const data = await res.json();
+            currentIP = data.ip;
+            document.getElementById('compact-ip').innerText = "" + currentIP;
+            document.getElementById('full-ip').innerText = currentIP;
+            
+            if (Intl.DateTimeFormat().resolvedOptions().timeZone) {
+                document.getElementById('node-loc').innerText = Intl.DateTimeFormat().resolvedOptions().timeZone;
             }
-        };
-    </script>
+        } catch (e) {
+            document.getElementById('compact-ip').innerText = "Target: LocalNode";
+        }
+
+        async function runPing() {
+            const start = performance.now();
+            try {
+                await fetch('https://www.google.com/favicon.ico', { mode: 'no-cors', cache: 'no-cache' });
+                const end = performance.now();
+                const latency = Math.round(end - start);
+                
+                document.getElementById('compact-ping').innerText = latency + " ms";
+                document.getElementById('full-ping').innerText = latency + " ms";
+            } catch (err) {
+                console.error("Ping error");
+            }
+            setTimeout(runPing, 1000);
+        }
+
+        runPing();
+    }
+
+    window.onload = init;
+</script>
+
 </body>
 </html>
 

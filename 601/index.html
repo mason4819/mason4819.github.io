@@ -67,15 +67,42 @@
             pointer-events: none;
             z-index: 1;
         }
+
+        /* 影片彈窗樣式 */
+        #video-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-blur: 5px;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 2.5rem;
+            text-align: center;
+            max-width: 85%;
+            border: 6px solid #fb923c;
+            animation: modal-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modal-in {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body onclick="handleFirstClick()">
 
-    <!-- 點擊此處啟動音樂與動畫 -->
+    <!-- 啟動層 -->
     <div id="start-overlay">
         <div class="text-9xl mb-10 heart-beat">🥫</div>
         <h1 class="text-5xl font-black mb-4">劉雅晴老師</h1>
-        <p class="text-2xl font-bold opacity-90 animate-pulse">請點擊開啟驚喜罐罐 🐾</p>
+        <p class="text-2xl font-bold opacity-90 animate-pulse">點擊開啟驚喜罐罐 🐾</p>
     </div>
 
     <!-- 驚喜主舞台 -->
@@ -86,21 +113,37 @@
             <h2 class="text-5xl md:text-7xl font-bold text-orange-400">生日快樂</h2>
             
             <div class="mt-10 p-8 bg-white/95 rounded-[3rem] shadow-2xl border-8 border-orange-200">
-                <p class="text-4xl font-black text-gray-800 tracking-widest">
+                <p class="text-4xl font-black text-gray-800 tracking-widest leading-relaxed">
                     祝雅晴老師：<br>
-                    平安健康、天天開心!<br>
-                    永遠18歲！
+                    平安健康、天天開心！<br>
+                    永遠 18 歲！🐾🎂
                 </p>
             </div>
         </div>
     </div>
 
-    <!-- 音樂資源 (使用 GitHub 上的穩定連結) -->
+    <!-- 影片引導彈窗 -->
+    <div id="video-modal">
+        <div class="modal-content">
+            <div class="text-6xl mb-4">📺🐾</div>
+            <h3 class="text-3xl font-black text-orange-600 mb-4">驚喜還沒結束！</h3>
+            <p class="text-xl text-gray-700 mb-8 font-bold">全班同學準備了一段影片<br>要送給雅晴老師喔！</p>
+            <div class="flex flex-col gap-4">
+                <!-- 將下面的 href 換成你們的影片網址 -->
+                <a href="video. mp4" target="_blank" onclick="closeModal()" class="bg-orange-500 hover:bg-orange-600 text-white text-2xl font-black py-4 px-8 rounded-full shadow-lg transition-transform active:scale-95">
+                    觀看生日影片 🎬
+                </a>
+                <button onclick="closeModal()" class="text-gray-400 font-bold">待會再看</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 音樂資源 -->
     <audio id="audio-birthday" loop preload="auto">
-        <source src="" type="audio/mpeg">
+        <source src="https://www.chosic.com/wp-content/uploads/2021/04/Happy-Birthday-To-You-Standard.mp3" type="audio/mpeg">
     </audio>
     <audio id="audio-meow" preload="auto">
-        <source src="mixkit-sweet-kitty-meow-93.wav" type="audio/mpeg">
+        <source src="https://www.myinstants.com/media/sounds/baby-cat-meow.mp3" type="audio/mpeg">
     </audio>
 
     <script>
@@ -108,7 +151,6 @@
 
         function handleFirstClick() {
             if (hasStarted) {
-                // 之後的點擊持續撒花跟發出喵聲
                 spawnConfetti();
                 playMeow();
                 return;
@@ -116,32 +158,43 @@
 
             hasStarted = true;
 
-            // 隱藏啟動層，顯示主舞台
+            // 切換視圖
             document.getElementById('start-overlay').style.display = 'none';
             document.getElementById('main-stage').style.display = 'flex';
 
-            // 強制播放音軌
+            // 啟動音效
             const music = document.getElementById('audio-birthday');
-            const meow = document.getElementById('audio-meow');
-            
+            music.volume = 0.8;
             music.play().catch(err => console.log("Audio Error:", err));
-            meow.play();
+            playMeow();
 
-            // 特效循環
+            // 特效
             spawnConfetti();
-            setInterval(spawnConfetti, 2000);
+            setInterval(spawnConfetti, 2500);
             
             // 漂浮裝飾
             for(let i=0; i<15; i++) {
                 setTimeout(createFloatingElement, i * 300);
             }
             setInterval(createFloatingElement, 800);
+
+            // --- 設定 10 秒後彈出影片視窗 ---
+            setTimeout(() => {
+                const modal = document.getElementById('video-modal');
+                modal.style.display = 'flex';
+                // 彈窗出現時再撒一次花
+                spawnConfetti();
+            }, 10000); // 10000 毫秒 = 10 秒
+        }
+
+        function closeModal() {
+            document.getElementById('video-modal').style.display = 'none';
         }
 
         function playMeow() {
             const m = document.getElementById('audio-meow');
             m.currentTime = 0;
-            m.play();
+            m.play().catch(()=>{});
         }
 
         function spawnConfetti() {

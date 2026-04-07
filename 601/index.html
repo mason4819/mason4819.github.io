@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>劉雅晴老師，生日快樂！🐾</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            background: #ffb347;
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+        }
+
+        /* 初始啟動層 */
+        #start-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffb347;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            cursor: pointer;
+            text-align: center;
+            color: white;
+        }
+
+        .heart-beat {
+            animation: beat 1s infinite;
+        }
+        @keyframes beat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        /* 主畫面內容 */
+        #main-stage {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #fffaf0 0%, #ffedd5 100%);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .cat-dance {
+            font-size: 10rem;
+            animation: sway 1s ease-in-out infinite alternate;
+        }
+        @keyframes sway {
+            from { transform: translateY(0) rotate(-10deg); }
+            to { transform: translateY(-20px) rotate(10deg); }
+        }
+
+        .floating-emoji {
+            position: absolute;
+            font-size: 2.5rem;
+            opacity: 0.2;
+            pointer-events: none;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body onclick="handleFirstClick()">
+
+    <!-- 點擊此處啟動音樂與動畫 -->
+    <div id="start-overlay">
+        <div class="text-9xl mb-10 heart-beat">🥫</div>
+        <h1 class="text-5xl font-black mb-4">劉雅晴老師</h1>
+        <p class="text-2xl font-bold opacity-90 animate-pulse">請點擊開啟驚喜罐罐 🐾</p>
+    </div>
+
+    <!-- 驚喜主舞台 -->
+    <div id="main-stage">
+        <div class="cat-dance z-10">🐱</div>
+        <div class="text-center px-6 mt-4 z-10">
+            <h1 class="text-7xl md:text-9xl font-black text-orange-600 mb-2">劉雅晴老師</h1>
+            <h2 class="text-5xl md:text-7xl font-bold text-orange-400">生日快樂</h2>
+            
+            <div class="mt-10 p-8 bg-white/95 rounded-[3rem] shadow-2xl border-8 border-orange-200">
+                <p class="text-4xl font-black text-gray-800 tracking-widest">
+                    祝雅晴老師：<br>
+                    平安健康、天天開心!<br>
+                    永遠18歲！
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 音樂資源 (使用 GitHub 上的穩定連結) -->
+    <audio id="audio-birthday" loop preload="auto">
+        <source src="" type="audio/mpeg">
+    </audio>
+    <audio id="audio-meow" preload="auto">
+        <source src="sound.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        let hasStarted = false;
+
+        function handleFirstClick() {
+            if (hasStarted) {
+                // 之後的點擊持續撒花跟發出喵聲
+                spawnConfetti();
+                playMeow();
+                return;
+            }
+
+            hasStarted = true;
+
+            // 隱藏啟動層，顯示主舞台
+            document.getElementById('start-overlay').style.display = 'none';
+            document.getElementById('main-stage').style.display = 'flex';
+
+            // 強制播放音軌
+            const music = document.getElementById('audio-birthday');
+            const meow = document.getElementById('audio-meow');
+            
+            music.play().catch(err => console.log("Audio Error:", err));
+            meow.play();
+
+            // 特效循環
+            spawnConfetti();
+            setInterval(spawnConfetti, 2000);
+            
+            // 漂浮裝飾
+            for(let i=0; i<15; i++) {
+                setTimeout(createFloatingElement, i * 300);
+            }
+            setInterval(createFloatingElement, 800);
+        }
+
+        function playMeow() {
+            const m = document.getElementById('audio-meow');
+            m.currentTime = 0;
+            m.play();
+        }
+
+        function spawnConfetti() {
+            const config = {
+                origin: { y: 0.6 },
+                colors: ['#ffb347', '#ffcc33', '#ffffff', '#ff9900', '#ffd700']
+            };
+            confetti({ ...config, particleCount: 150, spread: 70 });
+        }
+
+        function createFloatingElement() {
+            const el = document.createElement('div');
+            el.className = 'floating-emoji';
+            el.innerText = Math.random() > 0.5 ? '🐾' : '🐈';
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.bottom = '-50px';
+            
+            const duration = 5 + Math.random() * 5;
+            el.animate([
+                { transform: `translateY(0) rotate(0deg)`, opacity: 0.5 },
+                { transform: `translateY(-110vh) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+            ], {
+                duration: duration * 1000,
+                easing: 'linear'
+            });
+
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), duration * 1000);
+        }
+    </script>
+</body>
+</html>
+

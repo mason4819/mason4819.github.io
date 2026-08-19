@@ -290,19 +290,16 @@
       <div class="field">
         <label>電子編號</label>
         <input type="text" id="inpENumber" value="eVisa-KC-26-003">
+        <div class="hint" style="margin-top:6px;">條碼內容會自動與電子編號同步。</div>
       </div>
       <div class="field">
         <label>備註</label>
         <input type="text" id="inpNote" value="無">
       </div>
-      <div class="field">
-        <label>條碼內容</label>
-        <input type="text" id="inpBarcode" value="eVisa-KC-26-003">
-      </div>
 
       <hr class="sep">
 
-      <div class="hint">國旗、國家名稱、電子簽證/eVisa 副標題與底部說明文字為固定背景圖片，不可編輯。修改上方欄位後，右側預覽會即時更新，條碼會依「條碼內容」即時同步。</div>
+      <div class="hint">國旗、國家名稱、電子簽證/eVisa 副標題與底部說明文字為固定背景圖片，不可編輯。修改上方欄位後，右側預覽會即時更新。</div>
     </aside>
 
     <main class="preview-area">
@@ -350,7 +347,6 @@
     visaNumber:"KC-26-0730-PD",
     eNumber:"eVisa-KC-26-003",
     note:"無",
-    barcode:"eVisa-KC-26-003",
     hasAvatar:false,
     avatarImg:null,        // Image object of cropped avatar
     avatarOriginalImg:null // Image object of original uploaded photo (for re-crop)
@@ -568,7 +564,7 @@
 
   function generateBarcode(){
     try{
-      const text = state.barcode && state.barcode.trim() ? state.barcode.trim() : "0000000000";
+      const text = state.eNumber && state.eNumber.trim() ? state.eNumber.trim() : "0000000000";
       window.JsBarcode(barcodeSource, text, {
         format:"CODE128",
         width:3,
@@ -630,6 +626,8 @@
       ctx.save();
       roundRect(ctx, ax, ay, aw, ah, 10);
       ctx.clip();
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(ax, ay, aw, ah);
       drawImageCover(ctx, state.avatarImg, ax, ay, aw, ah);
       ctx.restore();
       ctx.strokeStyle = "rgba(0,0,0,0.18)";
@@ -659,7 +657,7 @@
     drawField(ctx, W, H, "備註", state.note, W*0.632, 2, colW);
 
     // barcode box
-    drawBarcodeBox(ctx, W, H, W*0.615, H*0.795, W*0.352, H*0.165, state.barcode);
+    drawBarcodeBox(ctx, W, H, W*0.615, H*0.795, W*0.352, H*0.165, state.eNumber);
 
     ctx.restore(); // end clip
 
@@ -690,7 +688,6 @@
   bindText("inpVisaNumber","visaNumber");
   bindText("inpENumber","eNumber");
   bindText("inpNote","note");
-  bindText("inpBarcode","barcode");
 
   /* ---------------------------------------------------------
      Avatar upload + crop tool
@@ -827,6 +824,8 @@
     outCanvas.width = outW;
     outCanvas.height = outH;
     const octx = outCanvas.getContext("2d");
+    octx.fillStyle = "#ffffff";
+    octx.fillRect(0, 0, outW, outH);
     const sx = -cropState.offsetX / cropState.scale;
     const sy = -cropState.offsetY / cropState.scale;
     const sw = frameW / cropState.scale;
@@ -882,7 +881,6 @@
     $("inpVisaNumber").value = state.visaNumber;
     $("inpENumber").value = state.eNumber;
     $("inpNote").value = state.note;
-    $("inpBarcode").value = state.barcode;
     avatarThumb.classList.add("hidden");
     avatarThumb.src = "";
     btnRecrop.classList.add("hidden");

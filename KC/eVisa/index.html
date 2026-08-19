@@ -299,6 +299,14 @@
 
       <hr class="sep">
 
+      <h2>浮水印</h2>
+      <div class="field">
+        <label>樣本浮水印</label>
+        <button id="btnToggleSample" class="secondary" style="width:100%;">加上「樣本」浮水印</button>
+      </div>
+
+      <hr class="sep">
+
       <div class="hint">國旗、國家名稱、電子簽證/eVisa 副標題與底部說明文字為固定背景圖片，不可編輯。修改上方欄位後，右側預覽會即時更新。</div>
     </aside>
 
@@ -348,6 +356,7 @@
     eNumber:"eVisa-KC-26-003",
     note:"無",
     hasAvatar:false,
+    showSample:false,
     avatarImg:null,        // Image object of cropped avatar
     avatarOriginalImg:null // Image object of original uploaded photo (for re-crop)
   };
@@ -580,6 +589,20 @@
     }
   }
 
+  function drawSampleStamp(ctx, W, H){
+    ctx.save();
+    ctx.translate(W/2, H/2);
+    ctx.rotate(-0.34);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `500 ${Math.round(H*0.50)}px ${FONT_STACK}`;
+    ctx.fillStyle = "rgba(200,30,30,0.18)";
+    ctx.fillText("樣本", 0, 0);
+    ctx.restore();
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+  }
+
   function drawBarcodeBox(ctx, W, H, x, y, w, h, text){
     roundRect(ctx, x, y, w, h, 6);
     ctx.fillStyle = "#ffffff";
@@ -658,6 +681,11 @@
 
     // barcode box
     drawBarcodeBox(ctx, W, H, W*0.615, H*0.795, W*0.352, H*0.165, state.eNumber);
+
+    // "樣本" sample watermark stamp — topmost layer, stays inside the rounded clip
+    if (state.showSample){
+      drawSampleStamp(ctx, W, H);
+    }
 
     ctx.restore(); // end clip
 
@@ -873,6 +901,18 @@
 
   $("btnPrint").addEventListener("click", ()=> window.print());
 
+  const btnToggleSample = $("btnToggleSample");
+  function updateSampleButtonLabel(){
+    btnToggleSample.textContent = state.showSample ? "移除「樣本」浮水印" : "加上「樣本」浮水印";
+    btnToggleSample.classList.toggle("primary", state.showSample);
+    btnToggleSample.classList.toggle("secondary", !state.showSample);
+  }
+  btnToggleSample.addEventListener("click", ()=>{
+    state.showSample = !state.showSample;
+    updateSampleButtonLabel();
+    scheduleRender();
+  });
+
   $("btnReset").addEventListener("click", ()=>{
     state = Object.assign({}, defaultState);
     $("inpName").value = state.name;
@@ -886,6 +926,7 @@
     btnRecrop.classList.add("hidden");
     btnChangeAvatar.classList.add("hidden");
     btnChooseAvatar.classList.remove("hidden");
+    updateSampleButtonLabel();
     scheduleRender();
   });
 

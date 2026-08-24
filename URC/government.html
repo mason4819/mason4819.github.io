@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>美利幣 Meili Coin｜加拿大民主皇室聯合王國</title>
+<title>政府架構｜加拿大聯合共和國</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700;900&family=Noto+Sans+TC:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -167,39 +167,42 @@ footer .fine{max-width:560px;margin:0 auto;opacity:.85;line-height:1.7;}
 <body>
 <div class="strata-bg"></div>
 <nav>
-  <a class="brand" href="index.html"><img src="image.jpg" alt="KC 國旗"> KC</a>
+  <a class="brand" href="index.html"><img src="image.jpg" alt="URC 國旗"> URC</a>
   <div class="navlinks"><a href="index.html">首頁</a>
 <a href="history.html">歷史</a>
-<a href="government.html">政府</a>
+<a href="government.html" class="active">政府</a>
 <a href="law.html">法律</a>
-<a href="currency.html" class="active">貨幣</a>
+<a href="currency.html">貨幣</a>
 <a href="health.html">醫療與社會</a></div>
   <a class="discord-btn" href="https://discord.gg/yktX9apqCD" target="_blank" rel="noopener">加入 Discord</a>
 </nav>
 
-<div class="page-banner-plain"><img src="banner-inner.jpg" alt="加拿大民主皇室聯合王國 banner"></div>
+<div class="page-banner-plain"><img src="banner-inner.jpg" alt="加拿大聯合共和國 banner"></div>
 <div class="page-head-plain">
-  <span class="eyebrow">Currency</span>
-  <h1>美利幣 Meili Coin</h1>
-  <p>官方法定貨幣，符號為 <span class="mono">M,C</span>，與新台幣（TWD）之間已知換算比率為 1 M,C = 20 TWD。</p>
+  <span class="eyebrow">Government</span>
+  <h1>政府架構</h1>
+  <p>現代政體為民主共和制，行政、立法、司法三權依憲法分立運作，由中央管理層負責日常行政治理。</p>
 </div>
 <section class="tight">
-  <div class="currency-card">
-    <div class="coin">M,C</div>
-    <div class="converter">
-      <label for="mcInput">美利幣 → 新台幣 換算</label>
-      <div class="converter-row">
-        <input id="mcInput" type="number" min="0" value="1" inputmode="decimal">
-        <span class="eq">M,C　=</span>
-        <span class="result" id="twdResult">20 TWD</span>
-      </div>
-      <p class="rate-note">依已確認匯率換算：1 M,C = 20 TWD。</p>
-    </div>
+
+  <div class="gov-grid">
+    <div class="gov-card"><div class="role">Executive</div><h3>總統 — Mr. Jerry</h3><p>最高行政負責人，依法領導中央管理層、統籌行政政策，並依法任命或解除政府官員、發布行政命令。</p></div>
+    <div class="gov-card"><div class="role">Executive</div><h3>副總統 — Mason</h3><p>協助總統執行職務，共同承擔中央管理層之行政運作。</p></div>
+    <div class="gov-card"><div class="role">Legislative</div><h3>國民議會</h3><p>立法機關，依法對中央管理層之行政行為進行監督。</p></div>
+    <div class="gov-card"><div class="role">Judicial</div><h3>司法機關</h3><p>依法設立，負責司法審查；行政行為違法時，得依法接受司法審查。</p></div>
+  </div>
+
+  <div class="section-head" style="margin-top:64px;margin-bottom:0;"><span class="eyebrow" style="margin-bottom:14px;display:block;">Agencies · 主要行政機關</span></div>
+  <div class="agency-list"><span>外交部</span><span>內政部</span><span>財政部</span><span>移民署</span><span>其他依法設立機關</span></div>
+
+  <div class="section-head" style="margin-top:64px;margin-bottom:0;"><span class="eyebrow" style="margin-bottom:14px;display:block;">Constitutional Principles · 憲政原則</span></div>
+  <div class="principles">
+    <span class="chip">人民主權</span><span class="chip">民主</span><span class="chip">共和</span><span class="chip">法治</span><span class="chip">基本權利保障</span><span class="chip">行政立法司法分立</span>
   </div>
 </section>
 
 <footer>
-  <div class="brand" style="justify-content:center;"><img src="image.jpg" alt="KC 國旗" style="width:30px;height:20px;object-fit:cover;border:1px solid var(--hair);"> 加拿大民主皇室聯合王國</div>
+  <div class="brand" style="justify-content:center;"><img src="image.jpg" alt="URC 國旗" style="width:30px;height:20px;object-fit:cover;border:1px solid var(--hair);"> 加拿大聯合共和國</div>
   <p>官方資訊由中央管理層維護，內容依已確認資料呈現。</p>
   <a class="discord-btn" href="https://discord.gg/yktX9apqCD" target="_blank" rel="noopener">加入官方 Discord</a>
   <div class="discord-widget">
@@ -207,15 +210,6 @@ footer .fine{max-width:560px;margin:0 auto;opacity:.85;line-height:1.7;}
   </div>
   <p class="fine">本網站為虛擬國家（微國）之官方資訊網站，僅呈現已確認之國家資料，不包含未經確認之年份、法律內容、官員或外交關係。</p>
 </footer>
-<script>
-const mcInput = document.getElementById('mcInput');
-const twdResult = document.getElementById('twdResult');
-function updateRate(){
-  const v = parseFloat(mcInput.value)||0;
-  twdResult.textContent = (v*20).toLocaleString('zh-Hant-TW') + ' TWD';
-}
-mcInput.addEventListener('input', updateRate);
-updateRate();
-</script>
+
 </body>
 </html>

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>民權事件紀錄</title>
+    <!-- 載入 Tailwind CSS (非阻塞備援) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 載入 GSAP 動畫庫 (使用 defer 避免阻塞畫面渲染) -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+        /* =========================================================
+           WinUI 3 獨立完整樣式系統 (確保即使離線或阻擋 CDN 也 100% 正常顯示)
+           ========================================================= */
+        :root {
+            --bg-mica: #181818;
+            --bg-card: #242424;
+            --bg-card-hover: #2c2c2c;
+            --bg-inset: #1d1d1d;
+            --border-subtle: rgba(255, 255, 255, 0.09);
+            --border-strong: rgba(255, 255, 255, 0.16);
+            --accent-blue: #60cdff;
+            --accent-blue-bg: rgba(96, 205, 255, 0.12);
+            --accent-blue-border: rgba(96, 205, 255, 0.35);
+            --accent-amber: #fce100;
+            --accent-amber-bg: rgba(252, 225, 0, 0.1);
+            --accent-red: #ff99a4;
+            --accent-red-bg: rgba(255, 153, 164, 0.1);
+            --text-primary: #f3f3f3;
+            --text-secondary: #cccccc;
+            --text-muted: #999999;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            background-color: var(--bg-mica) !important;
+            color: var(--text-primary) !important;
+            font-family: "Segoe UI Variable", "Segoe UI", "Microsoft JhengHei", system-ui, -apple-system, sans-serif;
+            line-height: 1.65;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* 頂部導覽列 */
+        .winui-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: rgba(28, 28, 28, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 14px 20px;
+        }
+
+        .header-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .header-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .winui-app-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            background: var(--accent-blue-bg);
+            border: 1px solid var(--accent-blue-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: 0.02em;
+        }
+
+        .header-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* WinUI 3 按鈕樣式 */
+        .winui-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border-strong);
+            background-color: #2d2d2d;
+            color: var(--text-primary);
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .winui-btn:hover {
+            background-color: #383838;
+        }
+
+        .winui-btn-accent {
+            background-color: var(--accent-blue);
+            color: #111111;
+            border-color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        .winui-btn-accent:hover {
+            background-color: #7ad6ff;
+        }
+
+        /* 主容器 */
+        .winui-main {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 24px 16px 64px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* WinUI 3 極簡細線卡片 */
+        .winui-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .winui-card:hover {
+            border-color: var(--border-strong);
+        }
+
+        /* 左側經典天藍重點指示條 */
+        .winui-accent-pill {
+            position: relative;
+            padding-left: 14px;
+        }
+
+        .winui-accent-pill::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 4px;
+            bottom: 4px;
+            width: 3px;
+            border-radius: 99px;
+            background-color: var(--accent-blue);
+        }
+
+        .pill-amber::before { background-color: var(--accent-amber); }
+        .pill-red::before { background-color: var(--accent-red); }
+
+        /* 標籤徽章 */
+        .winui-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.03em;
+        }
+
+        .badge-blue {
+            background-color: var(--accent-blue-bg);
+            color: var(--accent-blue);
+            border: 1px solid var(--accent-blue-border);
+        }
+
+        .badge-amber {
+            background-color: var(--accent-amber-bg);
+            color: var(--accent-amber);
+            border: 1px solid rgba(252, 225, 0, 0.3);
+        }
+
+        .badge-red {
+            background-color: var(--accent-red-bg);
+            color: var(--accent-red);
+            border: 1px solid rgba(255, 153, 164, 0.3);
+        }
+
+        /* 稱謂網格 */
+        .entity-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .entity-item {
+            background-color: var(--bg-inset);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 10px 12px;
+        }
+
+        .entity-code {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 2px;
+        }
+        /* 列印模式自動切換白底黑字並最佳化為單頁 A4 排版 */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 10mm 12mm;
+            }
+            html, body {
+                background: #ffffff !important;
+                color: #111111 !important;
+                font-size: 11px !important;
+                line-height: 1.4 !important;
+                width: 100% !important;
+                min-height: auto !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .winui-header {
+                position: static !important;
+                background: #ffffff !important;
+                border-bottom: 1.5px solid #222222 !important;
+                padding: 0 0 6px 0 !important;
+                margin-bottom: 8px !important;
+            }
+            .winui-app-icon {
+                background: #f0f4f8 !important;
+                border-color: #999999 !important;
+                color: #111111 !important;
+                width: 28px !important;
+                height: 28px !important;
+            }
+            .header-title {
+                font-size: 14px !important;
+                color: #000000 !important;
+            }
+            .header-subtitle {
+                font-size: 10.5px !important;
+                color: #444444 !important;
+            }
+            .winui-main {
+                max-width: 100% !important;
+                padding: 0 !important;
+                gap: 7px !important;
+            }
+            .timeline-list {
+                gap: 7px !important;
+            }
+            /* 列印時強制顯示所有篩選隱藏的卡片 */
+            .event-card {
+                display: block !important;
+            }
+            .winui-card {
+                background: #ffffff !important;
+                color: #111111 !important;
+                border: 1px solid #bbbbbb !important;
+                border-radius: 5px !important;
+                padding: 8px 11px !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+            .winui-accent-pill {
+                padding-left: 10px !important;
+            }
+            .winui-accent-pill::before {
+                background-color: #222222 !important;
+                width: 2.5px !important;
+            }
+            .entity-grid {
+                grid-template-columns: repeat(6, 1fr) !important;
+                gap: 5px !important;
+                margin-top: 6px !important;
+            }
+            .entity-item {
+                background: #f8f9fa !important;
+                border: 1px solid #cccccc !important;
+                padding: 4px 6px !important;
+                text-align: center !important;
+            }
+            .entity-code {
+                font-size: 10.5px !important;
+                color: #005fb8 !important;
+                margin-bottom: 0 !important;
+            }
+            .entity-name {
+                font-size: 10px !important;
+                color: #222222 !important;
+            }
+            .event-header {
+                margin-bottom: 4px !important;
+            }
+            .winui-badge {
+                font-size: 9.5px !important;
+                padding: 1px 6px !important;
+                background: #f0f0f0 !important;
+                color: #222222 !important;
+                border: 1px solid #aaaaaa !important;
+            }
+            .event-title {
+                font-size: 12px !important;
+                color: #000000 !important;
+                margin-top: 2px !important;
+            }
+            .event-body {
+                font-size: 10.5px !important;
+                color: #222222 !important;
+                gap: 5px !important;
+            }
+            .callout-box {
+                background: #f8f9fa !important;
+                color: #111111 !important;
+                border: 1px solid #cccccc !important;
+                border-left: 3px solid #333333 !important;
+                padding: 5px 8px !important;
+                font-size: 10px !important;
+            }
+            .callout-box strong {
+                color: #000000 !important;
+            }
+            .summary-grid {
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 6px !important;
+                margin-top: 6px !important;
+            }
+            .summary-box {
+                background: #f8f9fa !important;
+                border: 1px solid #cccccc !important;
+                padding: 6px 8px !important;
+            }
+            .summary-box div:first-child {
+                font-size: 10.5px !important;
+                color: #000000 !important;
+                margin-bottom: 2px !important;
+            }
+            .summary-box div:last-child {
+                font-size: 10px !important;
+                color: #333333 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 頂部 WinUI 3 工具列 -->
+    <header class="winui-header anim-item">
+        <div class="header-inner">
+            <div class="header-title-group">
+                <div class="winui-app-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                </div>
+                <div>
+                    <div class="header-title">外交與政治事件完整紀錄報告</div>
+                    <div class="header-subtitle">事件始末澄清、責任檢討與正式立場聲明</div>
+                </div>
+            </div>
+            <div class="header-actions no-print">
+                <button onclick="copyPlainText()" class="winui-btn winui-btn-accent">
+                    <span>複製全文</span>
+                </button>
+                <button onclick="window.print()" class="winui-btn">
+                    <span>列印 / PDF</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要內容區塊 -->
+    <main class="winui-main">
+
+        <!-- 1. 稱謂與實體對照表 -->
+        <section class="winui-card anim-item">
+            <div class="winui-accent-pill">
+                <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">檔案稱謂與實體對照表</div>
+                <div style="font-size: 12px; color: var(--text-muted);">本紀錄採用以下統一簡稱以利閱讀</div>
+            </div>
+            <div class="entity-grid">
+                <div class="entity-item">
+                    <div class="entity-code">「我」</div>
+                    <div class="entity-name">Wilang</div>
+                </div>
+                <div class="entity-item">
+                    <div class="entity-code">「白方」</div>
+                    <div class="entity-name">白鎮民主共和國</div>
+                </div>
+                <div class="entity-item">
+                    <div class="entity-code">「民方」</div>
+                    <div class="entity-name">人民帝國</div>
+                </div>
+                <div class="entity-item">
+                    <div class="entity-code">「加方」</div>
+                    <div class="entity-name">加拿大聯合共和國</div>
+                </div>
+                <div class="entity-item">
+                    <div class="entity-code">「甲人」</div>
+                    <div class="entity-name">鼠餅大使</div>
+                </div>
+                <div class="entity-item">
+                    <div class="entity-code">「德方」</div>
+                    <div class="entity-name">德木蘭帝國</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 篩選控制列 -->
+        <div class="filter-bar anim-item no-print">
+            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">事件經過與立場詳述</div>
+            <div class="filter-group">
+                <button onclick="filterEvents('all')" id="btn-all" class="filter-btn active">全部階段 (4)</button>
+                <button onclick="filterEvents('mute')" id="btn-mute" class="filter-btn">禁言與交涉</button>
+                <button onclick="filterEvents('sanction')" id="btn-sanction" class="filter-btn">加方與白方處分</button>
+            </div>
+        </div>
+
+        <!-- 3. 事件時間軸 -->
+        <div class="timeline-list">
+
+            <!-- 階段 01 -->
+            <article class="winui-card event-card anim-item" data-category="mute">
+                <div class="event-header">
+                    <div class="winui-accent-pill">
+                        <span class="winui-badge badge-blue">階段 01 · 起因經過</span>
+                        <h2 class="event-title">民權聯盟禁言事件始末</h2>
+                    </div>
+                </div>
+                <div class="event-body">
+                    <p>起初，<strong>我（Wilang）</strong>於「民權聯盟」中因荒唐理由遭到家人禁言 1 分鐘，隨後該次禁言已解除。然而，在後續我僅發言幾句話的情況下，隨即遭到<strong>民方（人民帝國）</strong>禁言 10 分鐘，且期間完全未予解除。</p>
+                    <div class="callout-box">
+                        <strong style="color: var(--accent-blue);">認知落差與理由說明：</strong><br>
+                        事後得知民方禁言的理由是「覺得我很吵」。但由於<strong>禁言當下民方並未說明任何理由</strong>，導致我在資訊不對等的情況下，將此舉理解為「無故禁言、濫用職權」。
+                    </div>
+                </div>
+            </article>
+
+            <!-- 階段 02 -->
+            <article class="winui-card event-card anim-item" data-category="mute">
+                <div class="event-header">
+                    <div class="winui-accent-pill pill-amber">
+                        <span class="winui-badge badge-amber">階段 02 · 責任檢討</span>
+                        <h2 class="event-title">要求道歉之交涉方式檢討與致歉聲明</h2>
+                    </div>
+                </div>
+                <div class="event-body">
+                    <p>在上述禁言事件發生後，我強烈要求民方對此事道歉。在交涉過程中，我的言語帶有威脅性質——具體而言，是<strong>以「降低外交使節等級（降使級）」作為施壓手段</strong>，要求民方做出道歉。</p>
+                    <div class="callout-box callout-amber">
+                        <strong style="color: var(--accent-amber);">坦承疏失與致歉承諾：</strong><br>
+                        針對這一點，<strong>我坦承自己確實有錯</strong>。我不應該以威脅（降使級）的方式逼迫民方道歉。為示負責，<strong>我將於明日正式向民方道歉</strong>。
+                    </div>
+                </div>
+            </article>
+
+            <!-- 階段 03 -->
+            <article class="winui-card event-card anim-item" data-category="sanction">
+                <div class="event-header">
+                    <div class="winui-accent-pill pill-red">
+                        <span class="winui-badge badge-red">階段 03 · 體制與職位爭議</span>
+                        <h2 class="event-title">加方解除職位理由澄清及未經表決廢除皇室之質疑</h2>
+                    </div>
+                </div>
+                <div class="event-body">
+                    <p>隨後，<strong>加方（加拿大聯合共和國）</strong>與<strong>白方（白鎮民主共和國）</strong>突然解除我的職位（其中白方更直接將我踢出）。加方給出的理由極為離譜，聲稱「許多邦交國向我國反映，副總統與民方及德方（德木蘭帝國）發生衝突」。</p>
+                    <div class="callout-box">
+                        <strong style="color: var(--accent-blue);">事實澄清：舊事早已平息</strong><br>
+                        我在此鄭重澄清：無論是與<strong>德方</strong>的衝突事件（早已過去許久且平息），或是與<strong>民方</strong>的事件，皆已經平息落幕，加方以此作為解職理由顯然與事實不符。
+                    </div>
+                    <div class="callout-box callout-red">
+                        <strong style="color: var(--accent-red);">程序正當性質疑：未經表決逕自廢除皇室</strong><br>
+                        加方隨後又發布公告，在<strong>未經任何民主表決</strong>的情況下逕自「廢除皇室」，宣布全面轉型為民主共和制。試問：如此重大的國體變更，未經表決直接廢除皇室是合理的嗎？更何況加方事前<strong>完全未與我討論</strong>，過程中也無任何正當程序與溝通。
+                    </div>
+                </div>
+            </article>
+
+            <!-- 階段 04 -->
+            <article class="winui-card event-card anim-item" data-category="sanction">
+                <div class="event-header">
+                    <div class="winui-accent-pill pill-red">
+                        <span class="winui-badge badge-red">階段 04 · 驅逐事件反駁</span>
+                        <h2 class="event-title">白方以「無法禁言」認定濫權並驅逐之嚴正反駁</h2>
+                    </div>
+                </div>
+                <div class="event-body">
+                    <p>針對<strong>白方（白鎮民主共和國）</strong>的驅逐事件，白方僅因為「系統無法對我執行禁言」，便以此單方面認定我有「濫用職權」之行為，進而撤銷我的職位並將我驅逐出境。</p>
+                    <div class="callout-box callout-red">
+                        <strong style="color: var(--accent-red);">我的嚴正立場：</strong><br>
+                        我想明確說明兩點：第一，我近期根本沒有任何精力去干涉白方內政；第二，<strong>白方絕不能僅因為「禁不了我的言」，就將技術或權限設定問題直接扣上「濫權行為」的罪名</strong>，此舉毫無邏輯與正當性。
+                    </div>
+                </div>
+            </article>
+
+        </div>
+
+        <!-- 4. 核心立場總結 -->
+        <section class="winui-card anim-item">
+            <div class="winui-accent-pill">
+                <div style="font-size: 15px; font-weight: 600; color: var(--text-primary);">我方（Wilang）核心立場總結</div>
+            </div>
+            <div class="summary-grid">
+                <div class="summary-box">
+                    <div style="font-size: 13px; font-weight: 600; color: var(--accent-amber); margin-bottom: 4px;">01. 勇於承擔交涉疏失</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">承認以「降使級」威脅民方道歉並不妥當，將於明日正式向民方致歉。</div>
+                </div>
+                <div class="summary-box">
+                    <div style="font-size: 13px; font-weight: 600; color: var(--accent-blue); margin-bottom: 4px;">02. 拒絕不實指控與黑箱改制</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">德方與民方事件早已平息；加方未經溝通與表決便廢除皇室，程序嚴重失當。</div>
+                </div>
+                <div class="summary-box">
+                    <div style="font-size: 13px; font-weight: 600; color: var(--accent-red); margin-bottom: 4px;">03. 駁斥白方無端濫權罪名</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">無精力干涉白方內政，白方不能以「無法禁言」作為認定濫權及驅逐的藉口。</div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 底部提示訊息 -->
+    <div id="toast-msg">
+        <span style="color: var(--accent-blue); font-weight: bold;">✓</span>
+        <span id="toast-text">已將完整事件紀錄複製到剪貼簿</span>
+    </div>
+
+    <script>
+        // 啟動 GSAP 動畫 (保證預設完全可見，僅做位移微調，絕不導致黑屏)
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof gsap !== 'undefined') {
+                gsap.from(".anim-item", {
+                    y: 14,
+                    duration: 0.45,
+                    stagger: 0.07,
+                    ease: "power2.out",
+                    clearProps: "transform"
+                });
+            }
+        });
+
+        // 篩選時間軸事件卡片
+        function filterEvents(category) {
+            const cards = document.querySelectorAll('.event-card');
+            const buttons = document.querySelectorAll('.filter-btn');
+
+            buttons.forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById('btn-' + category);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            const visibleCards = [];
+            cards.forEach(card => {
+                if (category === 'all' || card.getAttribute('data-category') === category) {
+                    card.style.display = 'block';
+                    visibleCards.push(card);
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if (typeof gsap !== 'undefined' && visibleCards.length > 0) {
+                gsap.fromTo(visibleCards,
+                    { y: 10 },
+                    { y: 0, duration: 0.3, stagger: 0.05, ease: "power2.out", clearProps: "transform" }
+                );
+            }
+        }
+
+        // 複製純文字全文
+        function copyPlainText() {
+            const reportText = `【外交與政治事件完整紀錄報告】
+稱謂對照：Wilang 稱「我」｜白鎮民主共和國稱「白方」｜人民帝國稱「民方」｜加拿大聯合共和國稱「加方」｜鼠餅大使稱「甲人」｜德木蘭帝國稱「德方」
+
+一、民權聯盟禁言事件始末
+我於民權聯盟因荒唐理由被家人禁言 1 分鐘，其中有解除禁言；後面我說幾句話，被民方禁言 10 分鐘且無解除。其理由是民方覺得我很吵將我禁言，但因當時民方未說明禁言理由，我則理解成無原因禁言、濫用職權。
+
+二、要求道歉之交涉方式檢討與致歉聲明
+於這件事之後我強烈要求民方道歉，其中我的言語使用了威脅（使用降使級來威脅民方道歉）。這點我有錯，我不應該以威脅的方式要求民方道歉，最後將於明日正式道歉。
+
+三、加方解除職位理由澄清及未經表決廢除皇室之質疑
+後面加方與白方突然解除我的職位（其中白方將我踢出）。加方理由很離譜，稱許多邦交國與我國反映副總統與民方及德方發生衝突。我澄清：德方事件已經過去很久且已經平息，民方事件也是已經平息。後面加方又發一條公告，未經表決廢除皇室並全面轉型為民主共和制——未經表決廢除皇室是應該的嗎？且加方尚未與我討論，也無任何正當程序。
+
+四、白方驅逐事件反駁
+白方因為無法禁言我便認定我有濫權行為，將我撤銷職位並驅逐。我想說明：我最近沒有任何精力干涉白方內政，且白方也不能因為禁不了言而認定我有濫權行為。`;
+
+            const textArea = document.createElement("textarea");
+            textArea.value = reportText;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast("已成功複製完整事件紀錄（純文字版）");
+            } catch (err) {
+                showToast("複製失敗，請手動選取文字複製");
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast-msg');
+            const textEl = document.getElementById('toast-text');
+            textEl.textContent = message;
+            toast.style.display = 'flex';
+            if (typeof gsap !== 'undefined') {
+                gsap.fromTo(toast, { y: 12 }, { y: 0, duration: 0.25, ease: "power2.out" });
+            }
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

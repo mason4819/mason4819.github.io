@@ -7,6 +7,17 @@
 <meta name="description" content="自動發送歡迎與離開訊息、歡迎圖片和自動身分組的 Discord 機器人，全中文指令。">
 <link rel="icon" type="image/png" href="/迎賓客WCB/icon.png">
 <link rel="stylesheet" href="/迎賓客WCB/style.css">
+<style>
+.status-table{min-width:0}
+.status-table td:first-child{width:9rem; font-weight:650}
+.status-table .dot{display:inline-block; width:.65em; height:.65em; margin-right:.55em; border:1.5px solid var(--ink); border-radius:50%; vertical-align:.04em}
+.status-table tr[data-state="up"] .dot{background:var(--ink)}
+.status-table tr[data-state="wait"] .dot{border-style:dotted}
+.status-table tr[data-state="unknown"] .dot{background:var(--line); border-color:var(--muted)}
+.status-table .detail{display:block; margin-top:.1rem; color:var(--muted); font-size:.9rem; line-height:1.6}
+.fine{margin:.9rem 0 0; color:var(--muted); font-size:.9rem}
+#status .actions{margin-top:1rem}
+</style>
 </head>
 <body>
 <a class="skip" href="#main">跳到主要內容</a>
@@ -24,13 +35,27 @@
   <a class="btn" href="https://discord.com/oauth2/authorize?client_id=1540186416452210780&amp;scope=bot%20applications.commands&amp;permissions=268487680">邀請到我的伺服器</a>
   <a class="btn" href="https://discord.gg/GHDPqEPwRM">加入官方伺服器</a>
   <a class="btn" href="/迎賓客WCB/privacy/">隱私權政策</a>
-    <a class="btn" href="/迎賓客WCB/terms/">服務條款</a>
+  <a class="btn" href="/迎賓客WCB/terms/">服務條款</a>
 </div>
 </div>
 <figure>
 <img src="welcome-sample.png" width="1200" height="406" alt="歡迎圖片範例：圓形頭像、WELCOME、成員名稱、歡迎加入範例伺服器、第 128 位成員">
 <figcaption>歡迎圖片範例。背景可以換成你自己的圖，<br>自訂圖片支援大小為 1200 × 406 px。</figcaption>
 </figure>
+</section>
+
+<section class="block" id="status" aria-labelledby="status-h">
+<h2 id="status-h">服務狀態</h2>
+<div class="tablebox"><table class="status-table">
+<thead><tr><th scope="col">主機</th><th scope="col">狀態</th></tr></thead>
+<tbody aria-live="polite">
+<tr id="st-render" data-state="wait"><td>Render</td><td><span class="dot" aria-hidden="true"></span><b class="state">檢查中</b><span class="detail"></span></td></tr>
+<tr id="st-wisp" data-state="wait"><td>Wispbyte</td><td><span class="dot" aria-hidden="true"></span><b class="state">檢查中</b><span class="detail"></span></td></tr>
+</tbody>
+</table></div>
+<div class="actions"><a class="btn quiet" href="#status" role="button" id="recheck">重新檢查</a></div>
+<p class="fine">狀態在你開啟頁面時即時檢查。兩台主機會輪流值班，一台使用中、另一台待命。Wispbyte 的狀態由 Render 回報，所以 Render 沒有回應時會顯示「無法確認」。</p>
+<noscript><p class="fine">需要開啟 JavaScript 才能檢查服務狀態。</p></noscript>
 </section>
 
 <section class="block" aria-labelledby="what">
@@ -68,8 +93,103 @@
 </div>
 </main>
 <footer class="foot"><div class="wrap">
-<p>最後更新：2026-11-21</p>
+<p>最後更新：2026-11-26</p>
 <p>聯絡：<mark>mason48191（Discord）</mark></p>
 </div></footer>
+
+<script>
+(function () {
+  var RENDER = 'https://dc-wb.onrender.com';
+  var STATUS_TIMEOUT = 20000;     // Render may need a while to wake up
+  var PING_TIMEOUT = 8000;
+  var KEY = 'wcb-last-online';
+  var rows = { render: document.getElementById('st-render'), wisp: document.getElementById('st-wisp') };
+  var button = document.getElementById('recheck');
+  var running = false;
+
+  function loadSeen() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } }
+  function saveSeen(seen) { try { localStorage.setItem(KEY, JSON.stringify(seen)); } catch (e) {} }
+  function when(ms) {
+    var d = new Date(ms);
+    return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+  function ago(seconds) {
+    seconds = Math.max(0, Math.round(seconds));
+    if (seconds < 90) { return '剛剛'; }
+    if (seconds < 5400) { return Math.round(seconds / 60) + ' 分鐘前'; }
+    return Math.round(seconds / 3600) + ' 小時前';
+  }
+  function duty(role) {
+    return { leader: '使用中，負責連線 Discord', standby: '待命中', standalone: '單機運作' }[role] || '';
+  }
+
+  // state: up | down | unknown | wait
+  function show(name, state, label, note) {
+    var row = rows[name];
+    var seen = loadSeen();
+    if (state === 'up') { seen[name] = Date.now(); saveSeen(seen); }
+    else if (state !== 'wait' && seen[name]) { note = (note ? note + '。' : '') + '上次看到上線：' + when(seen[name]); }
+    row.setAttribute('data-state', state);
+    row.querySelector('.state').textContent = label;
+    row.querySelector('.detail').textContent = note || '';
+  }
+
+  function timed(url, options, ms) {
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, ms);
+    options.signal = controller.signal;
+    return fetch(url, options).then(function (r) { clearTimeout(timer); return r; },
+                                    function (e) { clearTimeout(timer); throw e; });
+  }
+  // Any HTTP answer at all (even one the browser will not let us read) means the server is up.
+  function reachable(url) {
+    return timed(url, { mode: 'no-cors', cache: 'no-store' }, PING_TIMEOUT).then(function () { return true; }, function () { return false; });
+  }
+
+  function check() {
+    if (running) { return; }
+    running = true;
+    button.setAttribute('aria-disabled', 'true');
+    show('render', 'wait', '檢查中', '如果 Render 正在休眠，喚醒可能要一分鐘左右');
+    show('wisp', 'wait', '檢查中', '');
+
+    timed(RENDER + '/status', { cache: 'no-store' }, STATUS_TIMEOUT).then(function (response) {
+      if (!response.ok) { throw { http: response.status }; }
+      return response.json();
+    }).then(function (data) {
+      var parts = [duty(data.role), data.version].filter(Boolean);
+      show('render', 'up', '上線', parts.join('・'));
+      var peer = data.peer || {};
+      if (peer.checked === null || peer.checked === undefined) {
+        show('wisp', 'unknown', '無法確認', 'Render 還沒有檢查過這台');
+      } else {
+        var seconds = Date.now() / 1000 - peer.checked;
+        if (peer.up) { show('wisp', 'up', '上線', [duty(peer.role), 'Render ' + ago(seconds) + '檢查'].filter(Boolean).join('・')); }
+        else { show('wisp', 'down', '離線', 'Render ' + ago(seconds) + '檢查，連不到'); }
+      }
+    }).catch(function (error) {
+      if (error && error.http) {
+        show('render', 'down', '離線', '回應異常（HTTP ' + error.http + '），可能正在重新啟動');
+        show('wisp', 'unknown', '無法確認', '要由 Render 回報，目前 Render 回應異常');
+        return;
+      }
+      // No readable answer: either the server is down, or the bot is an older version without the CORS header.
+      return reachable(RENDER + '/health').then(function (up) {
+        if (up) {
+          show('render', 'up', '上線', '機器人版本較舊，看不到詳細狀態');
+          show('wisp', 'unknown', '無法確認', 'Render 的機器人需要更新才能回報這台');
+        } else {
+          show('render', 'down', '無回應', '可能已離線，或正在喚醒');
+          show('wisp', 'unknown', '無法確認', '要由 Render 回報，目前 Render 沒有回應');
+        }
+      });
+    }).then(function () { running = false; button.removeAttribute('aria-disabled'); },
+            function () { running = false; button.removeAttribute('aria-disabled'); });
+  }
+
+  button.addEventListener('click', function (event) { event.preventDefault(); check(); });
+  check();
+})();
+</script>
 </body>
 </html>
